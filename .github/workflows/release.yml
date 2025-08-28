@@ -1,0 +1,168 @@
+name: Publish Release
+
+on:
+  push:
+    tags: ["v*.*.*", "nightly"]
+  workflow_dispatch:
+    inputs:
+      nightly:
+        description: "Force nightly build"
+        required: false
+        default: false
+        type: boolean
+
+env:
+  IS_NIGHTLY: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.nightly == 'true' || contains(github.ref, 'nightly') }}
+
+jobs:
+  build-binaries:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        platform:
+          - {os: linux, arch: amd64}
+          - {os: linux, arch: arm64}
+          - {os: darwin, arch: amd64}
+          - {os: darwin, arch: arm64}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: false
+
+      - name: Set Go module cache path
+        run: echo "GOMODCACHE=$(go env GOMODCACHE)" >> $GITHUB_ENV
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.GOMODCACHE }}
+          key: go-modules-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            go-modules-
+
+      - name: Cache Go build
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/go-build
+          key: ${{ runner.os }}-${{ matrix.platform.os }}-${{ matrix.platform.arch }}-go-build-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.platform.os }}-${{ matrix.platform.arch }}-go-build-
+            ${{ runner.os }}-go-build-
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ env.IS_NIGHTLY }}" = "true" ]; then
+            echo "version=nightly-$(date +%Y%m%d-%H%M%S)-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build binary
+        run: |
+          export GOOS=${{ matrix.platform.os }}
+          export GOARCH=${{ matrix.platform.arch }}
+          export CGO_ENABLED=0
+          go build \
+            -ldflags="-w -s -X main.version=${{ steps.version.outputs.version }}" \
+            -trimpath \
+            -o gachigazer-$GOOS-$GOARCH \
+            ./cmd/bot/main.go
+
+      - name: Create tar.gz archive
+        run: |
+          tar -czvf gachigazer-${{ matrix.platform.os }}-${{ matrix.platform.arch }}.tar.gz \
+            gachigazer-${{ matrix.platform.os }}-${{ matrix.platform.arch }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bin-${{ matrix.platform.os }}-${{ matrix.platform.arch }}.tar.gz
+          path: gachigazer-${{ matrix.platform.os }}-${{ matrix.platform.arch }}.tar.gz
+
+  create-release:
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release_assets
+          pattern: bin-*.tar.gz
+          merge-multiple: true
+
+      - name: Determine release tag and name
+        id: release_info
+        run: |
+          if [ "${{ env.IS_NIGHTLY }}" = "true" ]; then
+            echo "tag=nightly" >> $GITHUB_OUTPUT
+            echo "name=Nightly Build ($(date +%Y-%m-%d %H:%M))" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "name=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.release_info.outputs.tag }}
+          name: ${{ steps.release_info.outputs.name }}
+          artifacts: "release_assets/*"
+          generateReleaseNotes: true
+          allowUpdates: true
+          replacesArtifacts: true
+
+  build-docker:
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download linux-amd64 archive
+        uses: actions/download-artifact@v4
+        with:
+          name: bin-linux-amd64.tar.gz
+          path: .
+
+      - name: Extract binary
+        run: |
+          mkdir -p bin
+          tar -xzvf gachigazer-linux-amd64.tar.gz
+          mv gachigazer-linux-amd64 bin/gachigazer
+
+      - name: Determine docker tags
+        id: docker_tags
+        run: |
+          if [ "${{ env.IS_NIGHTLY }}" = "true" ]; then
+            echo "tags=ghcr.io/${{ github.repository }}:nightly" >> $GITHUB_OUTPUT
+          else
+            echo "tags=ghcr.io/${{ github.repository }}:latest,ghcr.io/${{ github.repository }}:${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          tags: ${{ steps.docker_tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.visibility=public

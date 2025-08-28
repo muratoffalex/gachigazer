@@ -1,0 +1,9 @@
+/build
+.aider*
+.env
+*.db
+/cmd/test/
+/venv/
+/bin/
+/*.toml
+/*.json

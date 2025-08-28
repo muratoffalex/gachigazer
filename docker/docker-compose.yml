@@ -1,0 +1,21 @@
+services:
+  bot:
+    image: ghcr.io/muratoffalex/gachigazer:latest
+    restart: unless-stopped
+    environment:
+        TZ: ${TZ}
+    volumes:
+      - ./data:/app/data:rw
+      - ./cache/go-ytdlp:/root/.cache/go-ytdlp:rw
+      - ./config.toml:/app/gachigazer.toml:ro
+
+  duckai:
+    image: ghcr.io/muratoffalex/duckai:latest
+    restart: unless-stopped
+    working_dir: /app/data
+    environment:
+        TZ: ${TZ}
+    expose:
+      - "8080"
+    volumes:
+      - ./data:/app/data:rw

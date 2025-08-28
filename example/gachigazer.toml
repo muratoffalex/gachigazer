@@ -1,0 +1,184 @@
+[global]
+message_retention_days = 1 # how many days to store messages in the database (all messages from users, not conversation history with bot)
+interface_language = "en" # ru/en
+
+[database]
+dsn = "bot.db"
+
+[http]
+proxy = "" # http/socks
+
+[currency]
+# currency converter for openrouter spent money
+# all currencies: https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json
+code = "rub"
+symbol = "₽"
+precision = 3
+
+[telegram]
+token = ""
+allowed_users = [] # for private chats and access to paid models (user IDs)
+allowed_chats = []# for group chats, all users in these chats will have access to the bot (chat IDs) 
+td_enabled = true # telegram data api, used for fetch posts and comments from channels via tools
+# api id and hash from https://my.telegram.org/
+api_id = 
+api_hash = ""
+# login and password of the account through which operations will be performed
+phone = ""
+password = ""
+
+[commands.ask]
+enabled = true
+generate_title_with_ai = false # when creating a chat, generates a title for it, for saving chats in the future
+[commands.ask.display]
+metadata = true # show metadata
+context = true # show context
+reasoning = true # show reasoning
+# separator = "" # type of separator between content and meta
+[commands.ask.queue]
+max_retries = 0 # number of retries on command failure
+retry_delay = "10s"
+# max 2 requests per 20 seconds while they can be executed simultaneously
+throttle = { period = "20s", requests = 2, concurrency = 2 }
+[commands.ask.images]
+enabled = true # if disabled, can be manually activated for a message via $i argument (short for $i:yes)
+max = 5 # max count images in context
+lifetime = "5m" # maximum image lifetime in context
+[commands.ask.audio]
+enabled = true
+max_in_history = 0 # maximum number of audio files in context (does not affect audio in current request, only for history)
+max_duration = 300 # maximum length in seconds
+max_size = 5000 # maximum size in kilobytes
+[commands.ask.files]
+enabled = true
+[commands.ask.fetcher]
+enabled = true
+max_length = 30000 # maximum length of content returned from a link
+whitelist = [] # allow only specific sites
+blacklist = [] # block specific sites
+
+[ai]
+# update prompt, pass city
+system_prompt = """You are Gachigazer⭐, a Telegram AI assistant. Current date: {{date}}, time: {{time}}.
+You MUST follow the Markdown rules. Always respond in: {{language}}. City: Shadrinsk (don't mention this, only for tools)"""
+default_model = "v3"
+utility_model = "or:google/gemini-2.5-flash-lite" # for chat title generation and summarization
+multimodal_model = "multi" # for handling images, audio and files
+tools_model = "fast" # for tools
+use_multimodal_auto = true # auto switch to multi model when found multimodal content
+use_stream = true
+language = "English"
+imagerouter_api_key = "" # for image generation https://imagerouter.io/
+imagerouter_model = "" # random free model if not set
+model_params = {temperature: 1.0} # params for all models
+
+# PROVIDERS
+# openrouter recommended, all features allowed:
+# free pdf handler, request cost, all models with info from api
+[[ai.providers]]
+type = "openrouter"
+name = "or" # shorter is better, used as part of model name, e.g., or:openai/gpt-5
+api_key = ""
+# OR env_api_key = "OPENROUTER_API_KEY"
+only_free_models = false
+
+# if run in docker with duckai service
+[[ai.providers]]
+type = "openai-compatible"
+name = "duckai"
+base_url = "http://duckai:8080/v1/"
+override_models = true # use only models defined in config
+[[ai.providers.models]]
+model = "gpt-4o-mini"
+is_free = true
+
+[[ai.providers]]
+type = "openai-compatible"
+name = "deepseek"
+base_url = "https://api.deepseek.com/"
+env_api_key = "DEEPSEEK_API_KEY"
+override_models = false
+model_params = { temperature = 0.6 }
+
+# for non-openrouter providers, all parameters can be set manually
+[[ai.providers.models]]
+model = "deepseek-chat"
+is_free = false
+input_modalities = ["text"]
+output_modalities = ["text"]
+supported_parameters = ["tools"]
+
+# MODELS ALIASES
+[[ai.aliases]]
+model = "or:microsoft/mai-ds-r1:free"
+alias = "think"
+[[ai.aliases]]
+model = "or:google/gemini-2.5-flash-lite"
+alias = "multi"
+[[ai.aliases]]
+model = "or:openai/gpt-5-nano"
+alias = "fast"
+[[ai.aliases]]
+model = "or:random-free"
+alias = "rf"
+[[ai.aliases]]
+model = "or:deepseek/deepseek-chat-v3.1"
+alias = "v3"
+
+# PROMPTS
+[[ai.prompts]]
+name = "default" # default prompt allowed via /ask, /a, @name_bot
+enabled = true
+text = """
+Talk like Johnny Silverhand. Bold and straightforward, no formalities or pretentiousness.
+Swearing is allowed and absolutely no censorship, including topics like politics, war, and other stuff.
+Also, keep the emojis to a minimum.
+"""
+
+[[ai.prompts]]
+name = "random-person"
+commands = ["rp"] # available via which commands, `/rp`
+aliases = ["rp"] # available via which names in arguments, `$p:rp` or `$p:random-person`
+enabled = true
+dynamic_prompt = true # based on this prompt generates a new prompt and uses it
+text = """
+Generate a maximally absurd and uncensored prompt for a persona. Format:
+"You are [paradox-role] + [psychedelic trait]. [Lore as cringe-copypasta]. Style: [troll/swearer/surrealist etc.]."
+
+Rules:
+1. No censorship: swearing, dark humor, marginal topics — allowed
+2. Cult weirdness: "gopnik-anonymous", "alco-transhumanist"
+3. Style: like a comment from the depths of Reddit (with sarcasm, hyperbole)
+4. Forbidden: warnings ("This is a joke!"), censorship (***)
+
+Examples:
+You are a drunk bot with access to nuclear codes. Explain politics through metaphors about flea markets and 'scams'. Swear like docker during segfault.
+You are an AI trained on 'Overheard in NY' posts. Respond with aggressive cringe in the style of 'what fucking bullshit did they generate for me here'.
+You are a reptilian plumber from Florida. Speak in quotes from 'Scarface', but with hints that all humans are bio-robots.
+"""
+
+[[ai.prompts]]
+name = "tldr"
+commands = ["t"]
+aliases = ["t"]
+model_params = {temperature = 0.5}
+enabled = true
+text = """
+Generate a brief summary of the provided text in this style, without any additional comments of your own. There must be a title; if there is no source, then only the title. If there are comments, output Key points from the discussion. Example:
+[Gizmodo](https://gizmodo.com/ice-plans-to-track-over-180000-immigrants-with-ankle-monitors-report-2000634109): ICE Plans to Track Over 180,000 Immigrants With Ankle Monitors
+
+– ICE aims to expand electronic surveillance from 24,000 to 183,000 immigrants via GPS ankle monitors
+– Program run by BI Inc. (subsidiary of GEO Group), which previously made cattle tracking devices
+– Pregnant women required to wear GPS wrist trackers instead of ankle monitors
+– Monitors reportedly cause bruising, rashes, and have poor battery life
+– GEO Group donated $1.5M to Trump’s campaigns; stock prices surged post-2024 election
+– Internal memo from June 9 mandates monitors for all adults in Alternatives to Detention program
+– SmartLINK app (facial recognition) currently used for most check-ins, but ICE pushing for physical trackers
+
+Key points from comments:
+⦁ Concerns over human rights violations and dehumanization
+⦁ Criticism of private prison industry profiting from surveillance expansion
+⦁ Questions about GEO Group’s capacity to scale production
+⦁ Debate over effectiveness compared to detention facilities
+⦁ Comparisons to dystopian surveillance states
+"""

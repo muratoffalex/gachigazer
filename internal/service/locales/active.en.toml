@@ -1,0 +1,190 @@
+[error]
+other = "Error"
+[ok]
+other = "Ok"
+[waiting]
+other = "Waiting"
+[processing]
+other = "Processing"
+
+[ask.thinking]
+other = "Thinking..."
+[ask.stillThinking]
+other = "Still thinking..."
+[ask.modelNotAvailable]
+other = """
+⚠️ *Failed to retrieve model data* {{.ModelName}}
+It may no longer be available or you don't have sufficient permissions\\, check with the /model command
+"""
+[ask.generatingPerson]
+other = "Generating person..."
+[ask.handleURLs]
+other = "Handling URLs..."
+[ask.errorSendMessage]
+other = "Error while sending response"
+[ask.errorRetrieveMessages]
+other = "Error while retrieving messages from database"
+[ask.errorPleaseSpecifyText]
+other = "Please specify text or reply to a message with the command"
+[ask.errorFailGeneratingSummary]
+other = "Failed to generate summary"
+[ask.generatingSummary]
+other = "Generating summary..."
+[ask.emptyReplyFromAI]
+other = "⚠️ Empty response from AI. Please try again."
+[ask.emptyConversationTitle]
+other = "No title"
+[ask.telegramLengthRestriction]
+other = "⚠️ Telegram length restriction"
+[ask.reasoningContent]
+other = "Reasoning: {{.Reasoning}}"
+[ask.failedToProcessAIRequest]
+other = "⚠️ Failed to process AI request. Please try again later."
+[ask.toolUsageHint]
+other = "To rerun the tool, reply to the previous message and write /tools or `$tools`"
+[ask.runningToolsText]
+other = "Running tools: {{.Tools}}"
+[ask.retryButtonText]
+other = "🔄 Retry"
+[ask.info.metadataNotFound]
+other = "No AI metadata found for this message"
+[ask.info.replyToAIResponse]
+other = "Please reply to an AI response message to see its info"
+[ask.context]
+other = "*📄 Context*"
+[ask.maxLengthReached]
+other = "⚠️ Max length reached"
+[ask.response.previousMessage]
+other = "Previous message"
+[ask.response.tokens]
+other = "Tokens"
+[ask.response.totalTokens]
+other = "Total"
+[ask.response.parameters]
+other = "🔧 *Parameters*"
+[ask.response.model]
+other = "Model"
+[ask.response.contextTurns]
+other = "Conversation length"
+[ask.response.modelDoesntSupportImages]
+other = "Model doesn't support images"
+[ask.response.modelDoesntSupportAudio]
+other = "Model doesn't support audio"
+[ask.response.modelDoesntSupportPDF]
+other = "Model and provider doesn't support PDF"
+[ask.response.modelDoesntSupportTools]
+other = "Model doesn't support tools"
+[ask.response.additionalContext]
+other = "Additional context"
+[ask.response.files]
+other = "Files"
+[ask.response.images]
+other = "Images"
+[ask.response.audioInputs]
+other = "Audio"
+[ask.response.tools]
+other = "Tools"
+[ask.response.urls]
+other = "Ref URLs"
+[ask.response.usedTools]
+other = "Used tools"
+[ask.response.truncated]
+other = "truncated"
+[ask.response.promptTitle]
+other = "Prompt"
+[ask.response.reasoningTitle]
+other = "Reasoning"
+
+
+# model
+[model.errorProviderNotFound]
+other = "Error: provider {{.Provider}} not found"
+[model.permissionAllowed]
+other = "🔓 *You can use any models*"
+[model.permissionRestricted]
+other = "🔒 *You can only use free models*"
+[model.allowedCommands]
+other = """
+*Available commands:*
+/model list \\<search\\_term\\> \\- search available models
+/model \\<model\\_name\\> \\- switch model for this chat
+/model reset \\- reset to default
+"""
+[model.currentStatus]
+other = """
+*Current model*: {{.Model}}{{.Permission}}
+
+{{.Commands}}
+"""
+[model.specifyListTerm]
+other = "Please specify search term after 'list'. Example: /model list google"
+[model.search.notFound]
+other = "No models found for query '{{.Query}}'\nTry another search term"
+[telegram.tgOutputTruncatedWarning]
+other = "⚠️ Output truncated due to Telegram limitations."
+[model.search.resultsHeader]
+other = "Found models ({{.Count}}):\n\n"
+[model.search.switchInstructions]
+other = "\nTo switch:\n/model <model_name>"
+[model.reset.fail]
+other = "⚠️ Failed to reset model"
+[model.reset.success]
+other = "Model reset to default"
+[model.modelNotExist]
+other = "Model not exist: {{.ModelName}}"
+[model.freeUsageInstructions]
+other = """
+⚠️ You can only use free models\\.
+Examples:
+{{.Examples}}
+
+Use `/model list free` to view all available models
+"""
+[model.modelNotFoundError]
+other = "⚠️ Model '{{.Model}}' not found. Use /model list <name> to search"
+[model.switchSuccess]
+other = "Model switched to *{{.ModelName}}*"
+
+
+# youtube
+[youtube.download.start]
+other = "Downloading video..."
+[youtube.errorFailDownloadVideo]
+other = "failed to download video: %v"
+[youtube.errorFailGetFileInfo]
+other = "failed to get file info: %v"
+[youtube.errorNoVideoFilesFound]
+other = "no video files found"
+[youtube.errorURLNotFound]
+other = "Link not found in message"
+[youtube.errorIncorrectURL]
+other = "Incorrect link"
+[youtube.topComments]
+other = "Top {{.Count}} comments:"
+[youtube.unknownSize]
+other = "size unknown"
+[youtube.uploadVideoInfo]
+other = "Uploading video... ({{.FileSize}})"
+[youtube.fileTooBig]
+other = "⚠️ *Video is too big \\- {{.Size}}\\. Maximum \\- {{.MaxSize}}\n\n*{{.Caption}}"
+
+
+# r
+[r.pleaseProvideAtLeastOneTag]
+other = "Please provide at least one tag"
+[r.failedToGetPosts]
+other = "Failed to get posts: {{.Error}}"
+[r.noPostsFoundForTagsWithSuggest]
+other = "No posts found for tags: {{.Tags}}\nBut you might be interested in these similar tags:"
+[r.noPostsFoundForTags]
+other = "No posts found for tags: {{.Tags}}"
+[r.score]
+other = "Score"
+[r.scoreAvg]
+other = "avg"
+[r.scoreRange]
+other = "Score range"
+[r.fullLabel]
+other = "full"
+[r.tags]
+other = "Tags"

@@ -1,0 +1,51 @@
+[global]
+message_retention_days = 1
+interface_language = "en"
+
+[telegram]
+token = ""
+allowed_users = []
+allowed_chats = []
+
+[ai]
+default_model = "v3"
+utility_model = "or:google/gemini-2.5-flash-lite"
+multimodal_model = "multi"
+tools_model = "fast"
+use_multimodal_auto = true
+use_stream = true
+language = "English"
+imagerouter_api_key = ""
+imagerouter_model = ""
+
+[[ai.providers]]
+type = "openrouter"
+name = "or"
+api_key = ""
+only_free_models = false
+
+# if run in docker with duckai service
+[[ai.providers]]
+type = "openai-compatible"
+name = "duckai"
+base_url = "http://duckai:8080/v1/"
+override_models = true
+[[ai.providers.models]]
+model = "gpt-4o-mini"
+is_free = true
+
+[[ai.aliases]]
+model = "or:microsoft/mai-ds-r1:free"
+alias = "think"
+[[ai.aliases]]
+model = "or:google/gemini-2.5-flash-lite"
+alias = "multi"
+[[ai.aliases]]
+model = "or:openai/gpt-5-nano"
+alias = "fast"
+[[ai.aliases]]
+model = "or:random-free"
+alias = "rf"
+[[ai.aliases]]
+model = "or:deepseek/deepseek-chat-v3.1"
+alias = "v3"

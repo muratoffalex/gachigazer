@@ -1,0 +1,29 @@
+name: Verify Build
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: verify-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Build project
+        run: make build-linux

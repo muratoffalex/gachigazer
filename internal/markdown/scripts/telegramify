@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+import sys
+from telegramify_markdown import markdownify
+from telegramify_markdown.customize import get_runtime_config
+
+get_runtime_config().markdown_symbol.head_level_1 = ""
+get_runtime_config().markdown_symbol.head_level_2 = ""
+get_runtime_config().markdown_symbol.head_level_3 = ""
+get_runtime_config().markdown_symbol.head_level_4 = ""
+
+try:
+    input_str = sys.stdin.read()
+    result = markdownify(input_str)
+    sys.stdout.write(result)
+except Exception as e:
+    sys.stderr.write(f"Error: {str(e)}")
+    sys.exit(1)
