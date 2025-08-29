@@ -142,8 +142,19 @@ func (f *Fetcher) FetchYoutubeData(url string, flags int, maxComments int) (*You
 			return nil, fmt.Errorf("no captions available for this video")
 		}
 
-		languageCaptions, exists := file.AutomaticCaptions[*file.Language]
-		if !exists || len(languageCaptions) == 0 {
+		language := *file.Language
+		baseLanguage := strings.Split(language, "-")[0]
+
+		var languageCaptions []*ytdlp.ExtractedSubtitle
+		var exists bool
+
+		languageCaptions, exists = file.AutomaticCaptions[language]
+		if !exists {
+			// Try to find the base language (e.g., en-US -> en)
+			languageCaptions, exists = file.AutomaticCaptions[baseLanguage]
+		}
+
+		if !exists {
 			return nil, fmt.Errorf("no captions available for language: %s", *file.Language)
 		}
 
