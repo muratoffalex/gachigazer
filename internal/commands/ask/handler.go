@@ -124,12 +124,12 @@ func New(di *di.Container) *Command {
 				Type:        "bool",
 			},
 			{
-				Name:        "audio",
-				Description: "Enable image processing",
+				Name:        "a",
+				Description: "Enable audio processing",
 				Type:        "bool",
 			},
 			{
-				Name:        "noaudio",
+				Name:        "na",
 				Description: "Disable audio processing",
 				Type:        "bool",
 			},
