@@ -106,7 +106,7 @@ jobs:
         run: |
           if [ "${{ env.IS_NIGHTLY }}" = "true" ]; then
             echo "tag=nightly" >> $GITHUB_OUTPUT
-            echo "name=Nightly Build ($(date +%Y-%m-%d %H:%M))" >> $GITHUB_OUTPUT
+            echo "name=Nightly Build ($(date +"%Y-%m-%d %H:%M"))" >> $GITHUB_OUTPUT
           else
             echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
             echo "name=${{ github.ref_name }}" >> $GITHUB_OUTPUT
@@ -121,6 +121,8 @@ jobs:
           generateReleaseNotes: true
           allowUpdates: true
           replacesArtifacts: true
+          makeLatest: ${{ !env.IS_NIGHTLY }}
+          prerelease: ${{ env.IS_NIGHTLY }}
 
   build-docker:
     needs: build-binaries
