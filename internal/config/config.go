@@ -87,6 +87,7 @@ func Load() (*Config, error) {
 		GLOBAL_MESSAGE_RETENTION_DAYS: 1,
 		GLOBAL_LANGUAGE:               "en",
 		GLOBAL_FIX_INSTAGRAM_PREVIEWS: true,
+		GLOBAL_FIX_X_PREVIEWS:         true,
 		CURRENCY_PRECISION:            7,
 		TELEGRAM_TOKEN:                "",
 		TELEGRAM_TD_ENABLED:           false,
