@@ -521,7 +521,7 @@ func (c *Command) Execute(update telegram.Update) error {
 				// TODO: maybe no need to add URLs and images to the main request,
 				// because there can be a lot of them
 				currentContent.Media = append(currentContent.Media, messageContent.Media...)
-				currentContent.AddURLs(messageContent.URLs)
+				currentContent.AddURLsFromMap(messageContent.URLs)
 				currentContent.ImageURLs = append(currentContent.ImageURLs, messageContent.ImageURLs...)
 			}
 		}
@@ -553,7 +553,9 @@ func (c *Command) Execute(update telegram.Update) error {
 			replyMsgContent.UserInfo.EncodedID = c.getUserPublicID(replyMsg.From.ID)
 			replyMsgContent.ForwardOrigin = c.createForwardOrigin(replyMsg.ForwardOrigin)
 			currentContent.AddMedia(replyContent.Media...)
-			currentContent.AddURLs(replyContent.URLs)
+			currentContent.AddURLsFromMap(replyContent.URLs)
+			currentContent.AddImageURLs(replyContent.ImageURLs...)
+			currentContent.AddFileURLs(replyContent.FileURLs...)
 
 			if mediaGroupID := replyMsg.MediaGroupID; mediaGroupID != "" {
 				c.Logger.WithFields(logger.Fields{
@@ -576,7 +578,7 @@ func (c *Command) Execute(update telegram.Update) error {
 					}
 					messageContent := c.ExtractMessageContent(m.Message, false)
 					currentContent.AddMedia(messageContent.Media...)
-					currentContent.AddURLs(messageContent.URLs)
+					currentContent.AddURLsFromMap(messageContent.URLs)
 					if m.Message.Caption != "" {
 						replyContent.Text = m.Message.Caption
 					}
@@ -1845,7 +1847,7 @@ func (c *Command) handleURLs(currentContent *MessageContent, chatID int64, recur
 				if strings.Contains(url, "t.me") || strings.Contains(url, "reddit.com") || strings.Contains(url, "habr") {
 					urls := fetch.ExtractStrictURLs(content.Content[0].Text)
 					urls, _, _ = c.filterURLs(urls)
-					currentContent.AddURLsFromSlice(urls)
+					currentContent.AddURLs(urls...)
 				}
 				currentContent, _ = c.handleURLs(currentContent, chatID, false)
 			}
@@ -1854,14 +1856,14 @@ func (c *Command) handleURLs(currentContent *MessageContent, chatID int64, recur
 			URLs := content.GetURLs()
 			if len(URLs) > 0 {
 				urls, _, _ := c.filterURLs(URLs)
-				currentContent.AddURLsFromSlice(urls)
+				currentContent.AddURLs(urls...)
 				currentContent, _ = c.handleURLs(currentContent, chatID, false)
 			}
 
 			images := content.GetImages()
 			if len(images) > 0 {
 				for _, imgURL := range images {
-					currentContent.AddImageURL(imgURL)
+					currentContent.AddImageURLs(imgURL)
 				}
 			}
 		}

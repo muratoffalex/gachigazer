@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"slices"
@@ -372,15 +371,7 @@ func (mc *MessageContent) AddMedia(media ...ai.Content) {
 	}
 }
 
-func (mc *MessageContent) AddImageURL(url string) {
-	if mc.ImageURLs == nil {
-		mc.ImageURLs = make([]string, 0)
-	}
-	mc.ImageURLs = append(mc.ImageURLs, url)
-	log.Println("Added image URL:", url)
-}
-
-func (mc *MessageContent) AddURLs(urls map[string]*URLInfo) {
+func (mc *MessageContent) AddURLsFromMap(urls map[string]*URLInfo) {
 	if mc.URLs == nil {
 		mc.URLs = make(map[string]*URLInfo)
 	}
@@ -394,7 +385,7 @@ func (mc *MessageContent) AddURLs(urls map[string]*URLInfo) {
 	}
 }
 
-func (mc *MessageContent) AddURLsFromSlice(urls []string) {
+func (mc *MessageContent) AddURLs(urls ...string) {
 	if mc.URLs == nil {
 		mc.URLs = make(map[string]*URLInfo)
 	}
@@ -406,6 +397,20 @@ func (mc *MessageContent) AddURLsFromSlice(urls []string) {
 			}
 		}
 	}
+}
+
+func (mc *MessageContent) AddImageURLs(urls ...string) {
+	if mc.ImageURLs == nil {
+		mc.ImageURLs = []string{}
+	}
+	mc.ImageURLs = append(mc.ImageURLs, urls...)
+}
+
+func (mc *MessageContent) AddFileURLs(urls ...string) {
+	if mc.FileURLs == nil {
+		mc.FileURLs = []string{}
+	}
+	mc.FileURLs = append(mc.FileURLs, urls...)
 }
 
 func (mc *MessageContent) GetAllURLs() []string {
@@ -559,9 +564,9 @@ func (c *Command) ExtractMessageContent(msg *telegram.MessageOriginal, isCurrent
 	var URLs []string
 	URLs, imageURLs, fileURLs = c.extractURLsFromMessage(msg)
 
-	content.AddURLsFromSlice(URLs)
-	content.ImageURLs = imageURLs
-	content.FileURLs = fileURLs
+	content.AddURLs(URLs...)
+	content.AddImageURLs(imageURLs...)
+	content.AddFileURLs(fileURLs...)
 
 	// Extract media files
 	content.Media = c.extractMediaFromMessage(msg)
