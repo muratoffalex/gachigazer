@@ -1,13 +1,11 @@
-# Gachigazer
+# Gachigazer AI Bot
 
 [![Go Version](https://img.shields.io/badge/go-1.24%2B-blue)](https://golang.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-AI-Powered Telegram Bot
-
-## Description
-
 A multifunctional Telegram bot with LLM integration offering various QoL features, including advanced chat with LLMs and content downloads from YouTube/Twitch/Instagram, etc.
+
+![preview](assets/preview.webp)
 
 ## Features
 
