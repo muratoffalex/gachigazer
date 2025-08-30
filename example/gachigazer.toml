@@ -5,6 +5,7 @@
 message_retention_days = 1
 interface_language = "en" # ru/en
 fix_instagram_previews = true # convert www.instagram to ddinstagram
+fix_x_previews = true # convert x.com to fixupx.com
 
 [database]
 dsn = "bot.db"
@@ -30,6 +31,7 @@ api_hash = ""
 # login and password of the account through which operations will be performed
 phone = ""
 password = ""
+session_path = "tg_session.json" # for td
 
 [commands.ask]
 enabled = true

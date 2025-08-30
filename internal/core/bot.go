@@ -15,6 +15,7 @@ import (
 	"github.com/muratoffalex/gachigazer/internal/commands/random"
 	"github.com/muratoffalex/gachigazer/internal/config"
 	"github.com/muratoffalex/gachigazer/internal/database"
+	"github.com/muratoffalex/gachigazer/internal/fetch"
 	"github.com/muratoffalex/gachigazer/internal/logger"
 	"github.com/muratoffalex/gachigazer/internal/queue"
 	"github.com/muratoffalex/gachigazer/internal/service"
@@ -356,6 +357,14 @@ func (b *Bot) Start(ctx context.Context) error {
 				instaURL := instagram.ExtractInstagramURL(commandText)
 				if instaURL != "" {
 					modifiedURL := strings.Replace(instaURL, "www.instagram", "ddinstagram", 1)
+					b.tg.SendWithRetry(telegram.NewMessage(msg.Chat.ID, modifiedURL, msg.MessageID), 0)
+				}
+			}
+			if b.cfg.Global().FixXPreviews && strings.Contains(commandText, "https://x.com") {
+				urls := fetch.ExtractStrictURLs(commandText)
+				if len(urls) == 1 {
+					url := urls[0]
+					modifiedURL := strings.Replace(url, "x.com", "fixupx.com", 1)
 					b.tg.SendWithRetry(telegram.NewMessage(msg.Chat.ID, modifiedURL, msg.MessageID), 0)
 				}
 			}

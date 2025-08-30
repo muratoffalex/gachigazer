@@ -22,6 +22,7 @@ const (
 	GLOBAL_MESSAGE_RETENTION_DAYS     = "global.message_retention_days"
 	GLOBAL_LANGUAGE                   = "global.interface_language"
 	GLOBAL_FIX_INSTAGRAM_PREVIEWS     = "global.fix_instagram_previews"
+	GLOBAL_FIX_X_PREVIEWS             = "global.fix_x_previews"
 	CURRENCY_CODE                     = "currency.code"
 	CURRENCY_SYMBOL                   = "currency.symbol"
 	CURRENCY_PRECISION                = "currency.precision"
@@ -347,6 +348,7 @@ func (c *Config) Global() globalConfig {
 		MessageRetentionDays: c.k.Int(GLOBAL_MESSAGE_RETENTION_DAYS),
 		InterfaceLanguage:    c.k.String(GLOBAL_LANGUAGE),
 		FixInstagramPreviews: c.k.Bool(GLOBAL_FIX_INSTAGRAM_PREVIEWS),
+		FixXPreviews:         c.k.Bool(GLOBAL_FIX_X_PREVIEWS),
 	}
 }
 
