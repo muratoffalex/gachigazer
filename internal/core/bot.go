@@ -242,7 +242,7 @@ func (b *Bot) Start(ctx context.Context) error {
 			}
 
 			botUsername := b.tg.Self().UserName
-			if b.containsBotMention(commandText, botUsername) {
+			if !isCommand(commandText) && b.containsBotMention(commandText, botUsername) {
 				update.Message.Text = strings.ReplaceAll(strings.ToLower(update.Message.Text), "@"+strings.ToLower(botUsername), "")
 				update.Message.Caption = strings.ReplaceAll(strings.ToLower(update.Message.Caption), "@"+strings.ToLower(botUsername), "")
 				if cmd, ok := b.commands[ask.CommandName]; ok {
