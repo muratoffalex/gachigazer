@@ -65,7 +65,7 @@ func (t Tools) Generate_image(prompt, model, apiKey string) (string, string, str
 	}
 
 	if len(response.Data) > 0 {
-		return "Image generated", response.Data[0].B64JSON, model, nil
+		return "Image generated and sent in chat", response.Data[0].B64JSON, model, nil
 	}
 
 	return baseError, "", "", errors.New("image not generated")
