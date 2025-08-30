@@ -254,7 +254,9 @@ func (c *Config) GetAskCommandConfig() *AskCommandConfig {
 func (c *Config) GetRCommandConfig() *rCommandConfig {
 	return &rCommandConfig{
 		CommandConfig: *c.GetCommandConfig("ask"),
-		ApiURL:        c.k.String("commands.r.api_url"),
+		APIURL:        c.k.String("commands.r.api_url"),
+		APIKey:        c.k.String("commands.r.api_key"),
+		APIUserID:     c.k.String("commands.r.api_user_id"),
 	}
 }
 

@@ -188,3 +188,5 @@ other = "Score range"
 other = "full"
 [r.tags]
 other = "Tags"
+[r.missingAuthentication]
+other = "API authorization error"

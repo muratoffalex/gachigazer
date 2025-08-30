@@ -1,6 +1,7 @@
 package random
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -126,11 +127,15 @@ func (c *Command) Execute(update telegram.Update) error {
 
 	posts, err := c.api.getPosts(tags)
 	if err != nil {
+		message := c.L("r.failedToGetPosts", map[string]any{
+			"Error": err.Error(),
+		})
+		if errors.Is(err, ErrorAuth) {
+			message = c.L("r.missingAuthentication", nil)
+		}
 		msg := telegram.NewMessage(
 			update.Message.Chat.ID,
-			c.L("r.failedToGetPosts", map[string]any{
-				"Error": err.Error(),
-			}),
+			message,
 			update.Message.MessageID,
 		)
 		_, err := c.Tg.Send(msg)

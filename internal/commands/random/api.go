@@ -1,8 +1,10 @@
 package random
 
 import (
+	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,18 +19,62 @@ import (
 	"github.com/muratoffalex/gachigazer/internal/logger"
 )
 
+var ErrorAuth = errors.New("authentication error")
+
 type api struct {
 	baseURL string
+	apiKey  string
+	userID  string
 	logger  logger.Logger
 	cache   cache.Cache
+	client  *http.Client
 }
 
 func newAPI(di *di.Container) *api {
+	cfg := di.Cfg.GetRCommandConfig()
 	return &api{
-		baseURL: di.Cfg.GetRCommandConfig().ApiURL,
+		baseURL: cfg.APIURL,
+		apiKey:  cfg.APIKey,
+		userID:  cfg.APIUserID,
 		logger:  di.Logger,
 		cache:   di.Cache,
+		client:  di.HttpClient,
 	}
+}
+
+func (a *api) doRequest(URL string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", URL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := a.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute request: %w", err)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+
+	if strings.Contains(string(body), "Missing authentication") {
+		a.logger.WithError(fmt.Errorf("authentication error: %s", string(body))).Error("authentication error")
+		return nil, ErrorAuth
+	}
+
+	// Create a new response body since we've already read the original one
+	resp.Body = io.NopCloser(bytes.NewReader(body))
+
+	return resp, nil
+}
+
+func (a *api) buildURL(params url.Values) string {
+	if a.apiKey != "" {
+		params.Add("api_key", a.apiKey)
+	}
+	if a.userID != "" {
+		params.Add("user_id", a.userID)
+	}
+	return fmt.Sprintf("%s?%s", a.baseURL, params.Encode())
 }
 
 func (a *api) getPosts(tags []string) ([]Post, error) {
@@ -53,13 +99,12 @@ func (a *api) getPosts(tags []string) ([]Post, error) {
 	params.Add("json", "1")
 	params.Add("tags", strings.Join(tags, " "))
 
-	fullURL := fmt.Sprintf("%s?%s", a.baseURL, params.Encode())
-
+	fullURL := a.buildURL(params)
 	a.logger.WithFields(logger.Fields{
 		"url": fullURL,
 	}).Info("Fetching posts from API")
 
-	resp, err := http.Get(fullURL)
+	resp, err := a.doRequest(fullURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch posts: %w", err)
 	}
@@ -125,15 +170,14 @@ func (a *api) getTags() ([]Tag, error) {
 	params.Add("q", "index")
 	params.Add("limit", "1000")
 
-	fullURL := fmt.Sprintf("%s?%s", a.baseURL, params.Encode())
-
+	fullURL := a.buildURL(params)
 	a.logger.WithFields(logger.Fields{
 		"url": fullURL,
 	}).Debug("Fetching tags from API")
 
-	resp, err := http.Get(fullURL)
+	resp, err := a.doRequest(fullURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch tags: %w", err)
+		return nil, fmt.Errorf("failed to fetch posts: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -312,57 +356,4 @@ func (a *api) findSimilarTags(searchTag string) []string {
 	}).Debug("Found similar tags")
 
 	return result
-}
-
-func levenshteinDistance(s1, s2 string) int {
-	if len(s1) == 0 {
-		return len(s2)
-	}
-	if len(s2) == 0 {
-		return len(s1)
-	}
-	if s1 == s2 {
-		return 0
-	}
-
-	matrix := make([][]int, len(s1)+1)
-	for i := range matrix {
-		matrix[i] = make([]int, len(s2)+1)
-	}
-
-	for i := 0; i <= len(s1); i++ {
-		matrix[i][0] = i
-	}
-	for j := 0; j <= len(s2); j++ {
-		matrix[0][j] = j
-	}
-
-	for i := 1; i <= len(s1); i++ {
-		for j := 1; j <= len(s2); j++ {
-			if s1[i-1] == s2[j-1] {
-				matrix[i][j] = matrix[i-1][j-1]
-			} else {
-				matrix[i][j] = min3(
-					matrix[i-1][j]+1,
-					matrix[i][j-1]+1,
-					matrix[i-1][j-1]+1,
-				)
-			}
-		}
-	}
-
-	return matrix[len(s1)][len(s2)]
-}
-
-func min3(a, b, c int) int {
-	if a < b {
-		if a < c {
-			return a
-		}
-		return c
-	}
-	if b < c {
-		return b
-	}
-	return c
 }

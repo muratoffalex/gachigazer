@@ -189,3 +189,5 @@ other = "Диапазон очков"
 other = "фул"
 [r.tags]
 other = "Теги"
+[r.missingAuthentication]
+other = "Ошибка авторизации API"

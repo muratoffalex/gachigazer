@@ -573,5 +573,7 @@ type AskCommandConfig struct {
 
 type rCommandConfig struct {
 	CommandConfig commandConfig
-	ApiURL        string `koanf:"api_url"`
+	APIURL        string `koanf:"api_url"`
+	APIKey        string `koanf:"api_key"`
+	APIUserID     string `koanf:"api_user_id"`
 }

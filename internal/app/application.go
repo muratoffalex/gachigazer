@@ -96,8 +96,8 @@ func (a *Application) registerCommands(ctx context.Context) {
 		a.bot.RegisterCommand(start.New(a.di))
 	}
 	if cfg := a.cfg.GetRCommandConfig(); cfg.CommandConfig.Enabled {
-		if cfg.ApiURL == "" {
-			a.Logger.Warn("R command enabled, but api_url doesn't set")
+		if cfg.APIURL == "" || cfg.APIKey == "" || cfg.APIUserID == "" {
+			a.Logger.Warn("R command enabled, but api_url, key or user_id doesn't set")
 		} else {
 			a.bot.RegisterCommand(random.New(a.di))
 		}
