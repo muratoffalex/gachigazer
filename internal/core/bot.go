@@ -352,27 +352,11 @@ func (b *Bot) Start(ctx context.Context) error {
 				continue
 			}
 
-			if commandText != "" {
-				if instagram.ContainsInstagramURL(commandText) {
-					instaURL := instagram.ExtractInstagramURL(commandText)
-					if instaURL != "" {
-						modifiedURL := strings.Replace(instaURL, "www.instagram", "d.ddinstagram", 1)
-						b.tg.SendWithRetry(telegram.NewMessage(msg.Chat.ID, modifiedURL, msg.MessageID), 0)
-					}
-					// // TODO: make youtube commands for reels, insta for other
-					// var commandHandler commands.Command
-					// if cmd, exists := b.commands[instagram.CommandName]; exists {
-					// 	commandHandler = cmd
-					// 	// } else if cmd, exists := b.commands[youtube.CommandName]; exists && strings.Contains(commandText, "reel") {
-					// 	// 	commandHandler = cmd
-					// } else {
-					// 	continue
-					// }
-					//
-					// if err := commandHandler.Handle(update); err != nil {
-					// 	b.logger.WithError(err).Error("Failed to handle Instagram link")
-					// 	b.sendErrorMessage(err, msg.Chat.ID, msg.MessageID)
-					// }
+			if b.cfg.Global().FixInstagramPreviews && instagram.ContainsInstagramURL(commandText) {
+				instaURL := instagram.ExtractInstagramURL(commandText)
+				if instaURL != "" {
+					modifiedURL := strings.Replace(instaURL, "www.instagram", "ddinstagram", 1)
+					b.tg.SendWithRetry(telegram.NewMessage(msg.Chat.ID, modifiedURL, msg.MessageID), 0)
 				}
 			}
 		}

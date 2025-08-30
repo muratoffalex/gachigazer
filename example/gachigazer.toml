@@ -1,6 +1,10 @@
 [global]
-message_retention_days = 1 # how many days to store messages in the database (all messages from users, not conversation history with bot)
+# How many days to keep user messages (not bot)
+# These messages are needed for the $c argument to work
+# Use /help command to learn more about this argument
+message_retention_days = 1
 interface_language = "en" # ru/en
+fix_instagram_previews = true # convert www.instagram to ddinstagram
 
 [database]
 dsn = "bot.db"
@@ -34,7 +38,7 @@ generate_title_with_ai = false # when creating a chat, generates a title for it,
 metadata = true # show metadata
 context = true # show context
 reasoning = true # show reasoning
-# separator = "" # type of separator between content and meta
+# separator = "──────" # type of separator between content and meta
 [commands.ask.queue]
 max_retries = 0 # number of retries on command failure
 retry_delay = "10s"

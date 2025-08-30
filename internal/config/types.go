@@ -12,6 +12,7 @@ import (
 type globalConfig struct {
 	MessageRetentionDays int    `koanf:"message_retention_days"`
 	InterfaceLanguage    string `koanf:"interface_language"`
+	FixInstagramPreviews bool   `koanf:"fix_instagram_previews"`
 }
 
 type CurrencyConfig struct {

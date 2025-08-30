@@ -21,6 +21,7 @@ import (
 const (
 	GLOBAL_MESSAGE_RETENTION_DAYS     = "global.message_retention_days"
 	GLOBAL_LANGUAGE                   = "global.interface_language"
+	GLOBAL_FIX_INSTAGRAM_PREVIEWS     = "global.fix_instagram_previews"
 	CURRENCY_CODE                     = "currency.code"
 	CURRENCY_SYMBOL                   = "currency.symbol"
 	CURRENCY_PRECISION                = "currency.precision"
@@ -84,6 +85,7 @@ func Load() (*Config, error) {
 	defaults := map[string]any{
 		GLOBAL_MESSAGE_RETENTION_DAYS: 1,
 		GLOBAL_LANGUAGE:               "en",
+		GLOBAL_FIX_INSTAGRAM_PREVIEWS: true,
 		CURRENCY_PRECISION:            7,
 		TELEGRAM_TOKEN:                "",
 		TELEGRAM_TD_ENABLED:           false,
@@ -344,6 +346,7 @@ func (c *Config) Global() globalConfig {
 	return globalConfig{
 		MessageRetentionDays: c.k.Int(GLOBAL_MESSAGE_RETENTION_DAYS),
 		InterfaceLanguage:    c.k.String(GLOBAL_LANGUAGE),
+		FixInstagramPreviews: c.k.Bool(GLOBAL_FIX_INSTAGRAM_PREVIEWS),
 	}
 }
 
