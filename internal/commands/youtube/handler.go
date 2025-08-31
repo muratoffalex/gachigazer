@@ -333,7 +333,7 @@ func (c *Command) Execute(update telegram.Update) error {
 			startMessageID,
 			messageID,
 			fmt.Errorf(
-				"%s:\n%s",
+				"%s\n%s",
 				markdown.Escape(c.L("youtube.failedToSendVideo", nil)),
 				caption,
 			),
