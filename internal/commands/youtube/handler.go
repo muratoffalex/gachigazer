@@ -18,6 +18,7 @@ import (
 	"github.com/muratoffalex/gachigazer/internal/commands/base"
 	"github.com/muratoffalex/gachigazer/internal/fetch"
 	"github.com/muratoffalex/gachigazer/internal/logger"
+	"github.com/muratoffalex/gachigazer/internal/markdown"
 	"github.com/muratoffalex/gachigazer/internal/telegram"
 )
 
@@ -65,11 +66,11 @@ func (c *Command) Execute(update telegram.Update) error {
 	if len(urls) > 0 {
 		url = urls[0]
 	} else {
-		return c.handleError(chatID, 0, messageID, errors.New(c.L("youtube.errorURLNotFound", nil)))
+		return c.handleError(chatID, 0, messageID, errors.New(c.L("youtube.errorURLNotFound", nil)), false)
 	}
 	url, err := cleanURL(url)
 	if err != nil {
-		return c.handleError(chatID, 0, messageID, errors.New(c.L("youtube.errorIncorrectURL", nil)))
+		return c.handleError(chatID, 0, messageID, errors.New(c.L("youtube.errorIncorrectURL", nil)), false)
 	}
 
 	tempDirectory := strings.TrimSuffix(c.Cfg.Youtube().TempDirectory, "/")
@@ -119,6 +120,7 @@ func (c *Command) Execute(update telegram.Update) error {
 				c.Localizer.Localize("youtube.errorFailDownloadVideo", nil),
 				err,
 			),
+			false,
 		)
 	}
 
@@ -132,6 +134,7 @@ func (c *Command) Execute(update telegram.Update) error {
 				c.Localizer.Localize("youtube.errorFailGetFileInfo", nil),
 				err,
 			),
+			false,
 		)
 	}
 
@@ -141,6 +144,7 @@ func (c *Command) Execute(update telegram.Update) error {
 			startMessageID,
 			messageID,
 			errors.New(c.Localizer.Localize("youtube.errorNoVideoFilesFound", nil)),
+			false,
 		)
 	}
 
@@ -324,7 +328,17 @@ func (c *Command) Execute(update telegram.Update) error {
 	}).Info("Started upload video...")
 	c.Tg.SendChatAction(chatID, telegram.ActionUploadVideo)
 	if _, err := c.Tg.RequestRaw(outputMessage); err != nil {
-		return c.handleError(chatID, startMessageID, messageID, fmt.Errorf("failed to send video. Text: %s", caption))
+		return c.handleError(
+			chatID,
+			startMessageID,
+			messageID,
+			fmt.Errorf(
+				"%s:\n%s",
+				markdown.Escape(c.L("youtube.failedToSendVideo", nil)),
+				caption,
+			),
+			true,
+		)
 	}
 
 	_, err = c.Tg.DeleteMessage(chatID, startMessageID)
@@ -338,7 +352,7 @@ func (c *Command) Execute(update telegram.Update) error {
 	return nil
 }
 
-func (c *Command) handleError(chatID int64, startMessageID int, messageID int, orErr error) error {
+func (c *Command) handleError(chatID int64, startMessageID int, messageID int, orErr error, markdown bool) error {
 	var err error
 	if startMessageID != 0 {
 		_, err = c.Tg.DeleteMessage(chatID, startMessageID)
@@ -355,6 +369,9 @@ func (c *Command) handleError(chatID int64, startMessageID int, messageID int, o
 	}
 	answer := telegram.NewMessage(chatID, text, messageID)
 	answer.LinkPreviewDisabled = true
+	if markdown {
+		answer.ParseMode = telegram.ModeMarkdownV2
+	}
 	_, err = c.Tg.Send(&answer)
 	if err != nil {
 		c.Logger.WithError(err).WithFields(logger.Fields{

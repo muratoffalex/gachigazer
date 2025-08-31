@@ -167,6 +167,8 @@ other = "size unknown"
 other = "Uploading video... ({{.FileSize}})"
 [youtube.fileTooBig]
 other = "⚠️ *Video is too big \\- {{.Size}}\\. Maximum \\- {{.MaxSize}}\n\n*{{.Caption}}"
+[youtube.failedToSendVideo]
+other = "Failed to send video. Text:"
 
 
 # r

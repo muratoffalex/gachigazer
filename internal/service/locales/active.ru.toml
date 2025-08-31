@@ -167,7 +167,8 @@ other = "размер неизвестен"
 other = "Загружаю видео... ({{.FileSize}})"
 [youtube.fileTooBig]
 other = "⚠️ *Видео слишком большое \\- {{.Size}}\\. Максимум \\- {{.MaxSize}}\n\n*{{.Caption}}"
-
+[youtube.failedToSendVideo]
+other = "Ошибка при отправке видео. Текст:"
 
 # r
 [r.pleaseProvideAtLeastOneTag]
