@@ -3,7 +3,7 @@
 [![Go Version](https://img.shields.io/badge/go-1.24%2B-blue)](https://golang.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-A multifunctional Telegram bot with LLM integration offering various QoL features, including advanced chat with LLMs and content downloads from YouTube/Twitch/Instagram, etc.
+A multifunctional Telegram bot with LLM integration offering various QoL features, including advanced chat with LLMs and content downloads from YouTube/Twitch/Instagram, etc. A great addition to small groups, allowing members to quickly summarize content and discuss it using AI.
 
 ![preview](assets/preview.webp)
 
@@ -412,6 +412,7 @@ You can learn more by asking the bot with the `/help` command.
   /a $c:1h@user $ni $na $nu $nf - for 1 hour from a specific user, without processing images, audio, links, and files.
   ````
 
+- Don't want to watch a long youtube video? Just send it to the bot and ask for a brief summary, or better yet, prepare a prompt for this in advance
 - If a model doesn't support tools, it won't automatically launch them. You either need to explicitly request tool execution beforehand or specify the `$tools` argument (or the `/tools` command). For example, `/tools weather in london` will immediately run tools via a separate model and return the answer to the main one.
 - If you reply to the same bot message twice, these will be different branches. This way, you can, for example, perform a retry.
 - Using tools, you can fetch all posts from a Telegram channel, for instance, from the last 24 hours, and get a summary, display the most positive and negative posts by reactions. If a post is of more interest, you can request a link or fetch and analyze the comments.
