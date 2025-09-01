@@ -777,7 +777,7 @@ func (c *Command) Execute(update telegram.Update) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
-	messages := c.buildPromptWithHistory(model, currentContent, c.args)
+	messages := c.buildPromptWithHistory(model, currentContent, c.args, false)
 	logMessages := c.Logger.WithFields(logger.Fields{
 		"urls":   currentContent.GetProcessedURLs(),
 		"images": currentContent.ImageURLs,
@@ -1425,7 +1425,7 @@ func (c *Command) getMessagesFromHistoryByID(chatID int64, messageID int) ([]con
 }
 
 // --- Modified Prompt Builder ---
-func (c *Command) buildPromptWithHistory(model *ai.ModelInfo, currentContent *MessageContent, args *CommandArgs) []ai.Message {
+func (c *Command) buildPromptWithHistory(model *ai.ModelInfo, currentContent *MessageContent, args *CommandArgs, withoutUserMessage bool) []ai.Message {
 	var messages []ai.Message
 	history := currentContent.ConversationHistory
 	provider, _ := c.ai.GetProvider(model.Provider)
@@ -1611,6 +1611,9 @@ You MUST follow the Markdown rules. Always respond in: {{language}}`
 	slices.Reverse(historyMessages)
 	messages = append(messages, historyMessages...)
 
+	if withoutUserMessage {
+		return messages
+	}
 	// user message
 	userMessage := ai.Message{
 		Role:    ai.RoleUser,
@@ -2467,7 +2470,7 @@ func (c *Command) handleRequest(
 				currentContent.ConversationHistory = conversationHistory
 				currentContent.Tools = nil
 				requestTools = nil
-				messages = c.buildPromptWithHistory(model, currentContent, c.args)
+				messages = c.buildPromptWithHistory(model, currentContent, c.args, true)
 			}
 		} else if len(requestTools) > 0 {
 			currentModel = toolsModel
