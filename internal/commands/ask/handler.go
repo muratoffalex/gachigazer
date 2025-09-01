@@ -234,8 +234,6 @@ func (c *Command) Execute(update telegram.Update) error {
 			return errors.New("message in update not found")
 		}
 	}
-	userID := msg.From.ID
-	encodedUserID := c.getUserPublicID(msg.From.ID)
 	chatID := msg.Chat.ID
 	messageID := msg.MessageID
 	c.Logger = c.Logger.WithField("message_id", messageID)
@@ -278,6 +276,9 @@ func (c *Command) Execute(update telegram.Update) error {
 			toolFromCallback = true
 		}
 	}
+
+	userID := msg.From.ID
+	encodedUserID := c.getUserPublicID(userID)
 
 	currentContent := c.ExtractMessageContent(msg, true)
 	command := currentContent.Command
