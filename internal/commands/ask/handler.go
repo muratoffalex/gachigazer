@@ -2451,6 +2451,8 @@ func (c *Command) handleRequest(
 		toolsModel, err = c.ai.GetFormattedModel(ctx, toolsModelName, "")
 	}
 
+	isStream := *params.Stream
+
 	for iteration := range maxIterations {
 		var annotations []ai.AnnotationContent
 
@@ -2471,11 +2473,13 @@ func (c *Command) handleRequest(
 				currentContent.Tools = nil
 				requestTools = nil
 				messages = c.buildPromptWithHistory(model, currentContent, c.args, true)
+				isStream = *params.Stream
 			}
 		} else if len(requestTools) > 0 {
 			currentModel = toolsModel
+			isStream = false
 		}
-		if *params.Stream {
+		if isStream {
 			response.Content, response.Reasoning, tools, usage, annotations, params, err = c.AskStream(
 				ctx, messages, requestTools, currentModel, currentContent.Prompt.Name,
 				chatID, false, *params, sentMsgID,
