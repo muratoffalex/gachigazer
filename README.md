@@ -2,10 +2,16 @@
 
 [![Go Version](https://img.shields.io/badge/go-1.24%2B-blue)](https://golang.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Status](https://img.shields.io/badge/status-under%20development-orange)](https://github.com/muratoffalex/gachigazer)
 
 A multifunctional Telegram bot with LLM integration offering various QoL features, including advanced chat with LLMs and content downloads from YouTube/Twitch/Instagram, etc. A great addition to small groups, allowing members to quickly summarize content and discuss it using AI.
 
 ![preview](assets/preview.webp)
+
+> [!NOTE]
+> **Project is under active development**<br>
+> Expect bugs, incomplete features, and breaking changes.<br>
+> If you encounter any issues, please [open an issue](https://github.com/muratoffalex/gachigazer/issues).
 
 ## Features
 
@@ -109,9 +115,9 @@ services:
 Create [config.toml](#configuration) and run
 
 ```bash
-docker run --network host \
+docker run \
 -v ./config.toml:/app/gachigazer.toml \
--v ./bot.db:/app/data/bot.db \
+-v ~/.local/gachigazer:/app/data:rw
 -v ~/.cache/go-ytdlp/:/root/.cache/go-ytdlp \
 -e TZ=$TZ \
 --restart unless-stopped
@@ -133,6 +139,19 @@ source venv/bin/activate
 
 3. Create [config.toml](#configuration)
 4. Run bot `./gachigazer`
+
+## Telegram TD
+
+If you have configured TD authentication data in the config and the account you're using has 2FA enabled, you will need to enter the Telegram code directly in the terminal when starting the bot. This is required only once, after which the data will be saved to the file specified in `telegram.td_session`.
+
+If you're running via Docker, to enter the code you need to start the bot with TTY access, enter the code, and then run the bot normally.
+
+```bash
+# docker compose
+docker compose run bot ./gachigazer
+# docker
+docker run -v ~/.local/gachigazer:/app/data:rw -v ~/config.toml:/app/gachigazer.toml ghcr.io/muratoffalex/gachigazer:latest ./gachigazer
+```
 
 ## Configuration
 
@@ -230,6 +249,7 @@ api_hash = ""
 # login and password of the account through which operations will be performed
 phone = ""
 password = ""
+session_path = "data/tg_session.json"
 
 [commands.ask]
 enabled = true
@@ -394,8 +414,8 @@ Key points from comments:
 - **search_images** - Search for images by keywords
 - **fetch_yt_comments** - Fetch YouTube video comments
 - **fetch_url** - Fetch full content from URL
-- **fetch_tg_posts** - Fetch Telegram channel posts
-- **fetch_tg_post_comments** - Fetch Telegram post comments
+- **fetch_tg_posts** - Fetch Telegram channel posts (allowed if setup td options in config)
+- **fetch_tg_post_comments** - Fetch Telegram post comments (allowed if setup td options in config)
 - **weather** - Get weather forecasts for locations
 - **generate_image** - Generate images from text prompts
 
@@ -412,13 +432,13 @@ You can learn more by asking the bot with the `/help` command.
   /a $c:1h@user $ni $na $nu $nf - for 1 hour from a specific user, without processing images, audio, links, and files.
   ````
 
-- Don't want to watch a long youtube video? Just send it to the bot and ask for a brief summary, or better yet, prepare a prompt for this in advance
+- Don't want to watch a long youtube video? Just send it to the bot and ask for a brief summary, or better yet, prepare a prompt for this in advance.
 - If a model doesn't support tools, it won't automatically launch them. You either need to explicitly request tool execution beforehand or specify the `$tools` argument (or the `/tools` command). For example, `/tools weather in london` will immediately run tools via a separate model and return the answer to the main one.
 - If you reply to the same bot message twice, these will be different branches. This way, you can, for example, perform a retry.
 - Using tools, you can fetch all posts from a Telegram channel, for instance, from the last 24 hours, and get a summary, display the most positive and negative posts by reactions. If a post is of more interest, you can request a link or fetch and analyze the comments.
 - You can reply to a post with a link and type `/video` instead of copying and pasting the link; the bot will take the first link it finds.
 - With the `/info` command, you can view full information about a message and what's in the context: links with content, tools with results, images, request parameters, etc.
-- If you want to connect a thinking model for one request, you can use the `$think` argument (alias for `$m:think`). The same applies to the multimodal model (`$multi`), fast model (`$fast`), and random free model (`$rp`)
+- If you want to connect a thinking model for one request, you can use the `$think` argument (alias for `$m:think`). The same applies to the multimodal model (`$multi`), fast model (`$fast`), and random free model (`$rp`).
 
 ## Development
 
