@@ -471,7 +471,7 @@ func (c *Command) Execute(update telegram.Update) error {
 
 	var additionalContext []telegram.Update
 	if additionalContextArg := c.args.Context; additionalContextArg != "" {
-		count, duration, username, contextMessageID, _ := parseAddiotionalContextArg(additionalContextArg)
+		count, duration, username, contextMessageID, _ := parseAdditionalContextArg(additionalContextArg)
 
 		c.Logger.WithFields(logger.Fields{
 			"chat_id":          chatID,
@@ -1765,8 +1765,8 @@ func (c *Command) generateArgumentsHelpText() string {
 	return help.String()
 }
 
-func parseAddiotionalContextArg(contextStr string) (count int, duration time.Duration, username string, messageID string, err error) {
-	atPos := strings.Index(contextStr, "$")
+func parseAdditionalContextArg(contextStr string) (count int, duration time.Duration, username string, messageID string, err error) {
+	atPos := strings.Index(contextStr, "@")
 
 	if strings.HasPrefix(contextStr, "id") && len(contextStr) > 2 {
 		messageID = contextStr[2:]
@@ -2307,7 +2307,7 @@ func validateArg(arg *Argument, value string) error {
 	}
 
 	if arg.Name == "c" {
-		if _, _, _, _, err := parseAddiotionalContextArg(value); err != nil {
+		if _, _, _, _, err := parseAdditionalContextArg(value); err != nil {
 			return fmt.Errorf("context format: %v", err)
 		}
 	}
