@@ -1483,7 +1483,7 @@ Format examples:
 - OR use the activation control
 
 **search@1** {"query":"market trends 2025","max_results":5}"
-**fetch@2** {"url":"https://reports.example.com/Q3"}"
+**fetch_url@2** {"url":"https://reports.example.com/Q3"}"
 
 Critical format rules:
 1. Maintain conversation style

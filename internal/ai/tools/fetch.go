@@ -6,7 +6,7 @@ import (
 	"github.com/muratoffalex/gachigazer/internal/fetch"
 )
 
-func (t Tools) Fetch(url string) (string, error) {
+func (t Tools) Fetch_url(url string) (string, error) {
 	content := t.fetcher.Txt(fetch.RequestPayload{
 		URL: url,
 	})
