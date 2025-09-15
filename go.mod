@@ -12,7 +12,7 @@ require (
 	github.com/lrstanley/go-ytdlp v1.2.3
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/sirupsen/logrus v1.9.3
-	golang.org/x/net v0.43.0
+	golang.org/x/net v0.44.0
 	modernc.org/sqlite v1.38.2
 )
 
@@ -42,7 +42,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/mod v0.27.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/tools v0.36.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	rsc.io/qr v0.2.0 // indirect
@@ -72,10 +72,10 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	golang.org/x/crypto v0.41.0 // indirect
+	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b // indirect
-	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/text v0.28.0
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/text v0.29.0
 	golang.org/x/time v0.13.0
 	modernc.org/libc v1.66.7 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
