@@ -31,7 +31,10 @@ type Command struct {
 }
 
 func New(di *di.Container) (*Command, error) {
-	_, err := ytdlp.Install(context.TODO(), nil)
+	_, err := ytdlp.Install(context.TODO(), &ytdlp.InstallOptions{
+		DownloadURL:     di.Cfg.YtDlp().DownloadURL,
+		DisableChecksum: di.Cfg.YtDlp().DownloadURL != "",
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +76,7 @@ func (c *Command) Execute(update telegram.Update) error {
 		return c.handleError(chatID, 0, messageID, errors.New(c.L("youtube.errorIncorrectURL", nil)), false)
 	}
 
-	tempDirectory := strings.TrimSuffix(c.Cfg.Youtube().TempDirectory, "/")
+	tempDirectory := strings.TrimSuffix(c.Cfg.YtDlp().TempDirectory, "/")
 	if tempDirectory != "" {
 		tempDirectory += "/"
 	} else {
@@ -85,7 +88,7 @@ func (c *Command) Execute(update telegram.Update) error {
 		RecodeVideo("mp4").
 		Output("%(id)s.%(ext)s").
 		SetWorkDir(tempDirectory).
-		MaxFileSize(c.Cfg.Youtube().MaxSize).
+		MaxFileSize(c.Cfg.YtDlp().MaxSize).
 		AbortOnError().
 		PrintJSON().
 		WriteComments()
@@ -284,7 +287,7 @@ func (c *Command) Execute(update telegram.Update) error {
 		}
 	}
 
-	maxSize, err := parseSize(c.Cfg.Youtube().MaxSize)
+	maxSize, err := parseSize(c.Cfg.YtDlp().MaxSize)
 	mediaTooLarge := err == nil && maxSize > 0 && fileSize > 0 && fileSize > maxSize
 	var outputMessage telegram.Chattable
 	if !mediaTooLarge {
@@ -312,7 +315,7 @@ func (c *Command) Execute(update telegram.Update) error {
 	} else {
 		caption = c.Localizer.Localize("youtube.fileTooBig", map[string]any{
 			"Size":    c.Tg.EscapeText(fileSizeStr),
-			"MaxSize": c.Cfg.Youtube().MaxSize,
+			"MaxSize": c.Cfg.YtDlp().MaxSize,
 			"Caption": caption,
 		})
 		message := telegram.NewMessage(chatID, caption, messageID)

@@ -473,9 +473,10 @@ func (c aiConfig) GetPromptByName(name string) (aiPrompt, bool) {
 	return aiPrompt{}, false
 }
 
-type youtubeConfig struct {
+type ytdlpConfig struct {
 	MaxSize       string `koanf:"max_size"`
 	TempDirectory string `koanf:"temp_directory"`
+	DownloadURL   string `koanf:"download_url"`
 }
 
 type databaseConfig struct {

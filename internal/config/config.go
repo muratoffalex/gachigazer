@@ -54,8 +54,9 @@ const (
 	CHROME_ENABLED                    = "chrome.enabled"
 	CHROME_PATH                       = "chrome.path"
 	CHROME_OPTS                       = "chrome.opts"
-	YOUTUBE_MAX_SIZE                  = "youtube.max_size"
-	YOUTUBE_TEMP_DIRECTORY            = "youtube.temp_directory"
+	YTDLP_MAX_SIZE                    = "ytdlp.max_size"
+	YTDLP_TEMP_DIRECTORY              = "ytdlp.temp_directory"
+	YTDLP_DOWNLOAD_URL                = "ytdlp.download_url"
 	DATABASE_DSN                      = "database.dsn"
 	LOGGING_LEVEL                     = "logging.level"
 	LOGGING_WRITE_IN_FILE             = "logging.write_in_file"
@@ -97,8 +98,9 @@ func Load() (*Config, error) {
 		DATABASE_DSN:                  "bot.db?_journal=WAL&_busy_timeout=5000&_synchronous=NORMAL&_cache=shared",
 		LOGGING_LEVEL:                 "info",
 		LOGGING_WRITE_IN_FILE:         false,
-		YOUTUBE_MAX_SIZE:              "50M", // max size for normal bots without special permission
-		YOUTUBE_TEMP_DIRECTORY:        "",
+		YTDLP_MAX_SIZE:                "50M", // max size for normal bots without special permission
+		YTDLP_TEMP_DIRECTORY:          "",
+		YTDLP_DOWNLOAD_URL:            "", // Leave empty to use GitHub + auto-detected os/arch.
 		AI_SYSTEM_PROMPT:              "",
 		AI_LANGUAGE:                   "English",
 		AI_USE_STREAM:                 true,
@@ -282,10 +284,11 @@ func (c *Config) Instagram() instagramConfig {
 	}
 }
 
-func (c *Config) Youtube() youtubeConfig {
-	return youtubeConfig{
-		MaxSize:       c.k.String(YOUTUBE_MAX_SIZE),
-		TempDirectory: c.k.String(YOUTUBE_TEMP_DIRECTORY),
+func (c *Config) YtDlp() ytdlpConfig {
+	return ytdlpConfig{
+		MaxSize:       c.k.String(YTDLP_MAX_SIZE),
+		TempDirectory: c.k.String(YTDLP_TEMP_DIRECTORY),
+		DownloadURL:   c.k.String(YTDLP_DOWNLOAD_URL),
 	}
 }
 
