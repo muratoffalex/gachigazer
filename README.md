@@ -1,6 +1,6 @@
 # Gachigazer AI Bot
 
-[![Go Version](https://img.shields.io/badge/go-1.24%2B-blue)](https://golang.org/)
+[![Go Version](https://img.shields.io/badge/go-1.25%2B-blue)](https://golang.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Status](https://img.shields.io/badge/status-under%20development-orange)](https://github.com/muratoffalex/gachigazer)
 
