@@ -33,6 +33,11 @@ phone = ""
 password = ""
 session_path = "tg_session.json" # for td
 
+[ytdlp]
+download_url = "" # leave empty to use GitHub + auto-detected os/arch.
+temp_directory = "" # directory for downloading files. Leave empty to use go temp dir
+max_size = "" # abort download if filesize is larger, e.g. 50k or 44.6M
+
 [commands.ask]
 enabled = true
 generate_title_with_ai = false # when creating a chat, generates a title for it, for saving chats in the future
