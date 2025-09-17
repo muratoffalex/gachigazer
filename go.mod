@@ -1,26 +1,26 @@
 module github.com/muratoffalex/gachigazer
 
-go 1.24.0
+go 1.25
 
-toolchain go1.24.5
+toolchain go1.25.1
 
 require (
 	github.com/Davincible/goinsta/v3 v3.2.6
-	github.com/OvyFlash/telegram-bot-api v0.0.0-20250723080846-4b7dce3e82ce
+	github.com/OvyFlash/telegram-bot-api v0.0.0-20250903213241-2ddbaeebe9a5
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/knadh/koanf v1.5.0
 	github.com/lrstanley/go-ytdlp v1.2.4
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/net v0.44.0
-	modernc.org/sqlite v1.38.2
+	modernc.org/sqlite v1.39.0
 )
 
-require github.com/ulikunitz/xz v0.5.13 // indirect
+require github.com/ulikunitz/xz v0.5.15 // indirect
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
-	github.com/coder/websocket v1.8.13 // indirect
+	github.com/coder/websocket v1.8.14 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
@@ -35,15 +35,15 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/ogen-go/ogen v1.14.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
-	go.opentelemetry.io/otel v1.37.0 // indirect
-	go.opentelemetry.io/otel/metric v1.37.0 // indirect
-	go.opentelemetry.io/otel/trace v1.37.0 // indirect
+	go.opentelemetry.io/otel v1.38.0 // indirect
+	go.opentelemetry.io/otel/metric v1.38.0 // indirect
+	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/mod v0.27.0 // indirect
+	golang.org/x/mod v0.28.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/tools v0.36.0 // indirect
+	golang.org/x/tools v0.37.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	rsc.io/qr v0.2.0 // indirect
 )
@@ -58,7 +58,7 @@ require (
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
-	github.com/go-json-experiment/json v0.0.0-20250813233538-9b1f9ea2e11b // indirect
+	github.com/go-json-experiment/json v0.0.0-20250910080747-cc2cfa0554c3 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.4.0 // indirect
@@ -73,11 +73,11 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	golang.org/x/crypto v0.42.0 // indirect
-	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b // indirect
+	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.29.0
 	golang.org/x/time v0.13.0
-	modernc.org/libc v1.66.7 // indirect
+	modernc.org/libc v1.66.8 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
