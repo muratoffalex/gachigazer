@@ -72,74 +72,12 @@ func (s *ChatService) MergeModelParams(chatID int64, provider, alias, prompt str
 		return ai.ModelParams{}, err
 	}
 
-	baseParams, err := mapToModelParams(configParams)
+	baseParams, err := ai.NewModelParamsFromMap(configParams)
 	if err != nil {
 		return ai.ModelParams{}, err
 	}
 
-	return mergeParams(baseParams, requestParams), nil
-}
-
-func mapToModelParams(params map[string]any) (ai.ModelParams, error) {
-	var result ai.ModelParams
-	for k, v := range params {
-		switch k {
-		case "stream":
-			if val, ok := v.(bool); ok {
-				result.Stream = &val
-			}
-		case "temperature":
-			if val, ok := v.(float32); ok {
-				result.Temperature = &val
-			}
-		case "max_tokens":
-			if val, ok := v.(int); ok {
-				result.MaxTokens = &val
-			}
-		case "top_p":
-			if val, ok := v.(float32); ok {
-				result.TopP = &val
-			}
-		case "frequency_penalty":
-			if val, ok := v.(float32); ok {
-				result.FrequencyPenalty = &val
-			}
-		case "presence_penalty":
-			if val, ok := v.(float32); ok {
-				result.PresencePenalty = &val
-			}
-		case "stop_sequences":
-			if val, ok := v.([]string); ok {
-				result.StopSequences = val
-			}
-		}
-	}
-	return result, nil
-}
-
-func mergeParams(base, override ai.ModelParams) ai.ModelParams {
-	if override.Stream != nil {
-		base.Stream = override.Stream
-	}
-	if override.Temperature != nil {
-		base.Temperature = override.Temperature
-	}
-	if override.MaxTokens != nil {
-		base.MaxTokens = override.MaxTokens
-	}
-	if override.TopP != nil {
-		base.TopP = override.TopP
-	}
-	if override.FrequencyPenalty != nil {
-		base.FrequencyPenalty = override.FrequencyPenalty
-	}
-	if override.PresencePenalty != nil {
-		base.PresencePenalty = override.PresencePenalty
-	}
-	if override.StopSequences != nil {
-		base.StopSequences = override.StopSequences
-	}
-	return base
+	return baseParams.Merge(requestParams), nil
 }
 
 func (s *ChatService) resolveModelByName(ctx context.Context, userID int64, name string) (*ai.ModelInfo, error) {

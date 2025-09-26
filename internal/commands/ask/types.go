@@ -165,6 +165,27 @@ func (m *Metadata) GetDetailedInfo() string {
 	if m.ModelParams.TopP != nil {
 		params = append(params, fmt.Sprintf("*Top P:* %s", markdown.Escape(fmt.Sprintf("%.1f", *m.ModelParams.TopP))))
 	}
+	if m.ModelParams.Reasoning != nil {
+		reasoningParams := []string{}
+
+		if m.ModelParams.Reasoning.Enabled != nil {
+			reasoningParams = append(reasoningParams, fmt.Sprintf("  • Enabled: %t", *m.ModelParams.Reasoning.Enabled))
+		}
+		if m.ModelParams.Reasoning.Exclude != nil {
+			reasoningParams = append(reasoningParams, fmt.Sprintf("  • Exclude: %t", *m.ModelParams.Reasoning.Exclude))
+		}
+		if m.ModelParams.Reasoning.MaxTokens != nil {
+			reasoningParams = append(reasoningParams, fmt.Sprintf("  • Max Tokens: %d", *m.ModelParams.Reasoning.MaxTokens))
+		}
+		if m.ModelParams.Reasoning.Effort != nil {
+			reasoningParams = append(reasoningParams, fmt.Sprintf("  • Effort: %s", *m.ModelParams.Reasoning.Effort))
+		}
+
+		if len(reasoningParams) > 0 {
+			params = append(params, "*Reasoning:*")
+			params = append(params, reasoningParams...)
+		}
+	}
 
 	return fmt.Sprintf(
 		m.l.Localize("ask.response.parameters", nil)+"\n%s",

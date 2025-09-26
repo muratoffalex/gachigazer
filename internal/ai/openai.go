@@ -353,6 +353,7 @@ func (c *OpenAICompatibleClient) CreateRequest(
 		Stream:           stream,
 		Temperature:      params.Temperature,
 		MaxTokens:        params.MaxTokens,
+		Reasoning:        params.Reasoning,
 		TopP:             params.TopP,
 		FrequencyPenalty: params.FrequencyPenalty,
 		PresencePenalty:  params.PresencePenalty,

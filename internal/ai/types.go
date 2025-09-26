@@ -100,13 +100,111 @@ func (c *baseHTTPClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 type ModelParams struct {
-	Stream           *bool    `json:"stream,omitzero"`
-	Temperature      *float32 `json:"temperature,omitzero"`
-	MaxTokens        *int     `json:"max_tokens,omitzero"`
-	TopP             *float32 `json:"top_p,omitzero"`
-	FrequencyPenalty *float32 `json:"frequency_penalty,omitzero"`
-	PresencePenalty  *float32 `json:"presence_penalty,omitzero"`
-	StopSequences    []string `json:"stop_sequences,omitzero"`
+	Stream           *bool                 `json:"stream,omitzero"`
+	Temperature      *float32              `json:"temperature,omitzero"`
+	MaxTokens        *int                  `json:"max_tokens,omitzero"`
+	TopP             *float32              `json:"top_p,omitzero"`
+	FrequencyPenalty *float32              `json:"frequency_penalty,omitzero"`
+	PresencePenalty  *float32              `json:"presence_penalty,omitzero"`
+	StopSequences    []string              `json:"stop_sequences,omitzero"`
+	Reasoning        *ModelReasoningParams `json:"reasoning,omitzero"`
+}
+
+func NewModelParamsFromMap(params map[string]any) (ModelParams, error) {
+	var result ModelParams
+	for k, v := range params {
+		switch k {
+		case "stream":
+			if val, ok := v.(bool); ok {
+				result.Stream = &val
+			}
+		case "temperature":
+			if val, ok := v.(float32); ok {
+				result.Temperature = &val
+			}
+		case "max_tokens":
+			if val, ok := v.(int); ok {
+				result.MaxTokens = &val
+			}
+		case "top_p":
+			if val, ok := v.(float32); ok {
+				result.TopP = &val
+			}
+		case "frequency_penalty":
+			if val, ok := v.(float32); ok {
+				result.FrequencyPenalty = &val
+			}
+		case "presence_penalty":
+			if val, ok := v.(float32); ok {
+				result.PresencePenalty = &val
+			}
+		case "stop_sequences":
+			if val, ok := v.([]string); ok {
+				result.StopSequences = val
+			}
+		case "reasoning":
+			if reasoningMap, ok := v.(map[string]any); ok {
+				var reasoningParams ModelReasoningParams
+				for rk, rv := range reasoningMap {
+					switch rk {
+					case "enabled":
+						if val, ok := rv.(bool); ok {
+							reasoningParams.Enabled = &val
+						}
+					case "exclude":
+						if val, ok := rv.(bool); ok {
+							reasoningParams.Exclude = &val
+						}
+					case "max_tokens":
+						if val, ok := rv.(int); ok {
+							reasoningParams.MaxTokens = &val
+						}
+					case "effort":
+						if val, ok := rv.(string); ok {
+							reasoningParams.Effort = &val
+						}
+					}
+				}
+				result.Reasoning = &reasoningParams
+			}
+		}
+	}
+	return result, nil
+}
+
+func (base ModelParams) Merge(override ModelParams) ModelParams {
+	if override.Stream != nil {
+		base.Stream = override.Stream
+	}
+	if override.Temperature != nil {
+		base.Temperature = override.Temperature
+	}
+	if override.MaxTokens != nil {
+		base.MaxTokens = override.MaxTokens
+	}
+	if override.TopP != nil {
+		base.TopP = override.TopP
+	}
+	if override.FrequencyPenalty != nil {
+		base.FrequencyPenalty = override.FrequencyPenalty
+	}
+	if override.PresencePenalty != nil {
+		base.PresencePenalty = override.PresencePenalty
+	}
+	if override.StopSequences != nil {
+		base.StopSequences = override.StopSequences
+	}
+	if override.Reasoning != nil {
+		base.Reasoning = override.Reasoning
+	}
+	return base
+}
+
+type ModelReasoningParams struct {
+	Enabled   *bool   `json:"enabled,omitzero"`
+	Exclude   *bool   `json:"exclude,omitzero"`
+	MaxTokens *int    `json:"max_tokens,omitzero"`
+	Effort    *string `json:"effort,omitzero"`
 }
 
 type ChatService interface {
@@ -238,16 +336,17 @@ type Plugin struct {
 }
 
 type CompletionRequest struct {
-	Model            string    `json:"model"`
-	Messages         []Message `json:"messages"`
-	Tools            []Tool    `json:"tools,omitzero"`
-	Stream           bool      `json:"stream,omitempty"`
-	Temperature      *float32  `json:"temperature,omitzero"`
-	MaxTokens        *int      `json:"max_tokens,omitzero"`
-	TopP             *float32  `json:"top_p,omitzero"`
-	FrequencyPenalty *float32  `json:"frequency_penalty,omitzero"`
-	PresencePenalty  *float32  `json:"presence_penalty,omitzero"`
-	Plugins          []Plugin  `json:"plugins,omitzero"`
+	Model            string                `json:"model"`
+	Messages         []Message             `json:"messages"`
+	Tools            []Tool                `json:"tools,omitzero"`
+	Stream           bool                  `json:"stream,omitempty"`
+	Temperature      *float32              `json:"temperature,omitzero"`
+	Reasoning        *ModelReasoningParams `json:"reasoning,omitzero"`
+	MaxTokens        *int                  `json:"max_tokens,omitzero"`
+	TopP             *float32              `json:"top_p,omitzero"`
+	FrequencyPenalty *float32              `json:"frequency_penalty,omitzero"`
+	PresencePenalty  *float32              `json:"presence_penalty,omitzero"`
+	Plugins          []Plugin              `json:"plugins,omitzero"`
 	Provider         struct {
 		Sort              string `json:"sort,omitzero"` // price, latency, throughput
 		RequireParameters bool   `json:"require_parameters,omitzero"`

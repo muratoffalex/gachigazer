@@ -126,14 +126,41 @@ type aiPrompt struct {
 }
 
 type aiModelParams struct {
-	Temperature      *float32       `koanf:"temperature"`
-	Stream           *bool          `koanf:"stream"`
-	MaxTokens        *int           `koanf:"max_tokens"`
-	TopP             *float32       `koanf:"top_p"`
-	FrequencyPenalty *float32       `koanf:"frequency_penalty"`
-	PresencePenalty  *float32       `koanf:"presence_penalty"`
-	StopSequences    []string       `koanf:"stop_sequences"`
-	Timeout          *time.Duration `koanf:"timeout"`
+	Temperature      *float32                `koanf:"temperature"`
+	Stream           *bool                   `koanf:"stream"`
+	Reasoning        *aiModelReasoningParams `koanf:"reasoning"`
+	MaxTokens        *int                    `koanf:"max_tokens"`
+	TopP             *float32                `koanf:"top_p"`
+	FrequencyPenalty *float32                `koanf:"frequency_penalty"`
+	PresencePenalty  *float32                `koanf:"presence_penalty"`
+	StopSequences    []string                `koanf:"stop_sequences"`
+	Timeout          *time.Duration          `koanf:"timeout"`
+}
+
+type aiModelReasoningParams struct {
+	// https://openrouter.ai/docs/use-cases/reasoning-tokens
+	// One of the following (MaxTokens has priority)
+	MaxTokens *int    // Specific token limit (Anthropic-style)
+	Effort    *string // Can be "high", "medium", or "low" (OpenAI-style)
+
+	Enabled *bool `koanf:"enabled"` // Default: inferred from `effort` or `max_tokens`
+	Exclude *bool `koanf:"exclude"` // Set to true to exclude reasoning tokens from response
+}
+
+func (p *aiModelReasoningParams) ToRequestParams() map[string]any {
+	params := make(map[string]any)
+	if p.Enabled != nil {
+		params["enabled"] = *p.Enabled
+	}
+	if p.Exclude != nil {
+		params["exclude"] = *p.Exclude
+	}
+	if p.MaxTokens != nil {
+		params["max_tokens"] = *p.MaxTokens
+	} else if p.Effort != nil {
+		params["effort"] = *p.Effort
+	}
+	return params
 }
 
 func (p aiModelParams) ToRequestParams() map[string]any {
@@ -161,6 +188,9 @@ func (p aiModelParams) ToRequestParams() map[string]any {
 	}
 	if p.Timeout != nil {
 		params["timeout"] = *p.Timeout
+	}
+	if p.Reasoning != nil {
+		params["reasoning"] = p.Reasoning.ToRequestParams()
 	}
 	return params
 }
