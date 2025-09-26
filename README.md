@@ -339,8 +339,12 @@ supported_parameters = ["tools"]
 
 # MODELS ALIASES
 [[ai.aliases]]
-model = "or:microsoft/mai-ds-r1:free"
+model = "or:deepseek/deepseek-v3.1-terminus"
+alias = "v3"
+[[ai.aliases]]
+model = "or:deepseek/deepseek-v3.1-terminus"
 alias = "think"
+model_params = {reasoning = {enabled = true}}
 [[ai.aliases]]
 model = "or:google/gemini-2.5-flash-lite"
 alias = "multi"
@@ -350,9 +354,6 @@ alias = "fast"
 [[ai.aliases]]
 model = "or:random-free"
 alias = "rf"
-[[ai.aliases]]
-model = "or:deepseek/deepseek-chat-v3.1"
-alias = "v3"
 
 # PROMPTS
 [[ai.prompts]]
