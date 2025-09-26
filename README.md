@@ -117,11 +117,11 @@ Create [config.toml](#configuration) and run
 ```bash
 docker run \
 -v ./config.toml:/app/gachigazer.toml \
--v ~/.local/gachigazer:/app/data:rw
+-v ~/.local/gachigazer:/app/data:rw \
 -v ~/.cache/go-ytdlp/:/root/.cache/go-ytdlp \
--e TZ=$TZ \
---restart unless-stopped
---name gachigazer_bot
+-e TZ="$TZ" \
+--restart unless-stopped \
+--name gachigazer_bot \
 ghcr.io/muratoffalex/gachigazer:latest
 ```
 
