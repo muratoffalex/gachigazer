@@ -86,11 +86,20 @@ func (a *Application) registerCommands(ctx context.Context) {
 		a.bot.RegisterCommand(model.New(a.di))
 	}
 	if a.cfg.GetCommandConfig(youtube.CommandName).Enabled {
-		if cmd, err := youtube.New(a.di); err == nil {
+		go func() {
+			initCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
+			defer cancel()
+
+			cmd, err := youtube.New(initCtx, a.di)
+			if err != nil {
+				a.Logger.WithError(err).WithField("command", youtube.CommandName).Error(FailedToInit)
+				return
+			}
+
 			a.bot.RegisterCommand(cmd)
-		} else {
-			a.Logger.WithError(err).WithField("command", youtube.CommandName).Error(FailedToInit)
-		}
+			a.di.Queue.StartQueue(ctx, youtube.CommandName, cmd)
+			a.Logger.WithField("command", youtube.CommandName).Info("YouTube command registered successfully")
+		}()
 	}
 	if a.cfg.GetCommandConfig(start.CommandName).Enabled {
 		a.bot.RegisterCommand(start.New(a.di))
@@ -103,29 +112,20 @@ func (a *Application) registerCommands(ctx context.Context) {
 		}
 	}
 	if a.cfg.GetCommandConfig(instagram.CommandName).Enabled {
-		ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
-		defer cancel()
-
-		cmdChan := make(chan *instagram.Command, 1)
-		errChan := make(chan error, 1)
-
 		go func() {
-			cmd, err := instagram.New(ctx, a.di, a.bot)
+			initCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+			defer cancel()
+
+			cmd, err := instagram.New(initCtx, a.di, a.bot)
 			if err != nil {
-				errChan <- err
+				a.Logger.WithError(err).WithField("command", instagram.CommandName).Error(FailedToInit)
 				return
 			}
-			cmdChan <- cmd
-		}()
 
-		select {
-		case cmd := <-cmdChan:
 			a.bot.RegisterCommand(cmd)
-		case err := <-errChan:
-			a.Logger.WithError(err).WithField("command", instagram.CommandName).Error(FailedToInit)
-		case <-ctx.Done():
-			a.Logger.WithField("command", instagram.CommandName).Error("Instagram initialization timed out")
-		}
+			a.di.Queue.StartQueue(ctx, instagram.CommandName, cmd)
+			a.Logger.WithField("command", instagram.CommandName).Info("Instagram command registered successfully")
+		}()
 	}
 }
 

@@ -54,9 +54,6 @@ func NewBot(
 func (b *Bot) Start(ctx context.Context) error {
 	u := b.tg.NewUpdate(0, 60, 0)
 
-	b.queue.RegisterHandlers(b.commands)
-	go b.queue.Start(ctx, b.commands)
-
 	updates := b.tg.GetUpdatesChan(u)
 
 	b.logger.Info("Bot started")
@@ -389,6 +386,7 @@ func (b *Bot) RegisterCommand(cmd commands.Command) {
 	}).Debug("Registering command")
 
 	b.commands[name] = cmd
+	b.queue.StartQueue(context.Background(), cmd.Name(), cmd)
 }
 
 func isIgnoreMessage(text string) bool {

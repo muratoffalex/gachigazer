@@ -104,31 +104,30 @@ func (q *Queue) Add(cmd commands.Command, update telegram.Update, maxRetries int
 	return nil
 }
 
-func (q *Queue) Start(ctx context.Context, handlers map[string]commands.Command) {
-	q.logger.WithFields(logger.Fields{
-		"handlers": handlers,
-	}).Info("Starting queue with handlers")
-
-	q.handlers = handlers
-	for cmd, handler := range handlers {
-		cfg := handler.GetQueueConfig()
-
-		interval := cfg.Throttle.Period / time.Duration(cfg.Throttle.Requests)
-		q.logger.WithFields(logger.Fields{
-			"command":     cmd,
-			"period":      cfg.Throttle.Period,
-			"requests":    cfg.Throttle.Requests,
-			"interval":    interval,
-			"concurrency": cfg.Throttle.Concurrency,
-		}).Info("Configured rate limiter")
-
-		q.commandLimiters[cmd] = rate.NewLimiter(
-			rate.Every(interval),
-			cfg.Throttle.Requests,
-		)
-		q.commandSemaphores[cmd] = make(chan struct{}, cfg.Throttle.Concurrency)
-		go q.processCommandQueue(ctx, cmd, handler)
+func (q *Queue) StartQueue(ctx context.Context, cmd string, handler commands.Command) {
+	if _, exists := q.commandSemaphores[cmd]; exists {
+		q.logger.WithField("command", cmd).Warn("Queue already running")
+		return
 	}
+
+	cfg := handler.GetQueueConfig()
+
+	interval := cfg.Throttle.Period / time.Duration(cfg.Throttle.Requests)
+	q.logger.WithFields(logger.Fields{
+		"command":     cmd,
+		"period":      cfg.Throttle.Period,
+		"requests":    cfg.Throttle.Requests,
+		"interval":    interval,
+		"concurrency": cfg.Throttle.Concurrency,
+	}).Info("Configured rate limiter")
+
+	q.commandLimiters[cmd] = rate.NewLimiter(
+		rate.Every(interval),
+		cfg.Throttle.Requests,
+	)
+	q.commandSemaphores[cmd] = make(chan struct{}, cfg.Throttle.Concurrency)
+	q.handlers[cmd] = handler
+	go q.processCommandQueue(ctx, cmd, handler)
 }
 
 func (q *Queue) handleTaskError(ctx context.Context, task Task) error {

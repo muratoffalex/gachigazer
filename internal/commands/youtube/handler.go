@@ -31,8 +31,8 @@ type Command struct {
 	*base.Command
 }
 
-func New(di *di.Container) (*Command, error) {
-	_, err := ytdlp.Install(context.TODO(), &ytdlp.InstallOptions{
+func New(ctx context.Context, di *di.Container) (*Command, error) {
+	_, err := ytdlp.Install(ctx, &ytdlp.InstallOptions{
 		DownloadURL:     di.Cfg.YtDlp().DownloadURL,
 		DisableChecksum: di.Cfg.YtDlp().DownloadURL != "",
 	})
