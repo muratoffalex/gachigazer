@@ -97,7 +97,6 @@ func (a *Application) registerCommands(ctx context.Context) {
 			}
 
 			a.bot.RegisterCommand(cmd)
-			a.di.Queue.StartQueue(ctx, youtube.CommandName, cmd)
 			a.Logger.WithField("command", youtube.CommandName).Info("YouTube command registered successfully")
 		}()
 	}
