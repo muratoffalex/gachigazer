@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"os/exec"
 	"regexp"
 	"sort"
 	"strconv"
@@ -52,6 +53,8 @@ func (c *Command) Aliases() []string {
 }
 
 func (c *Command) Execute(update telegram.Update) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	text := update.Message.Text
 	urls := c.ExtractURLsFromEntities(text, update.Message.Entities)
 	if len(urls) == 0 {
@@ -83,9 +86,18 @@ func (c *Command) Execute(update telegram.Update) error {
 		tempDirectory = os.TempDir() + "/"
 	}
 
+	var format string
+	maxSizeStr := c.Cfg.YtDlp().MaxSize
+	if _, err := exec.LookPath("ffmpeg"); err == nil {
+		// good quality, small size
+		format = fmt.Sprintf("bv*[height<=1920][filesize<%s][ext=mp4]+ba[filesize<10M]", maxSizeStr)
+	} else {
+		format = fmt.Sprintf("best[height<=1920][filesize<%s][ext=mp4]", maxSizeStr)
+	}
+
 	dl := ytdlp.New().
-		FormatSort("res,ext:mp4:m4a").
-		RecodeVideo("mp4").
+		Format(format).
+		FormatSort("ext:mp4,res").
 		Output("%(id)s.%(ext)s").
 		SetWorkDir(tempDirectory).
 		MaxFileSize(c.Cfg.YtDlp().MaxSize).
@@ -100,7 +112,9 @@ func (c *Command) Execute(update telegram.Update) error {
 
 	startMessage := telegram.NewMessage(
 		chatID,
-		c.Localizer.Localize("youtube.download.start", nil),
+		c.Localizer.Localize("youtube.download.start", map[string]any{
+			"Info": "",
+		}),
 		messageID,
 	)
 	msg, err := c.Tg.Send(startMessage)
@@ -108,13 +122,58 @@ func (c *Command) Execute(update telegram.Update) error {
 		return fmt.Errorf("failed to send message: %v", err)
 	}
 	startMessageID := msg.MessageID
+	sizeExceeded := false
+	var fileSize int64
+	dl.ProgressFunc(time.Second*5, func(update ytdlp.ProgressUpdate) {
+		maxSize, err := parseSize(c.Cfg.YtDlp().MaxSize)
+		if err == nil && maxSize > 0 && update.TotalBytes > int(maxSize) {
+			sizeExceeded = true
+			fileSize = int64(update.TotalBytes)
+			cancel()
+			return
+		}
+		downloaded := formatFileSize(int64(update.DownloadedBytes))
+		total := formatFileSize(int64(update.TotalBytes))
+		info := fmt.Sprintf("(%s / %s)", downloaded, total)
+		text := c.Localizer.Localize("youtube.download.start", map[string]any{
+			"Info": info,
+		})
+		c.Logger.WithFields(logger.Fields{
+			"downloaded": downloaded,
+			"total":      total,
+		}).Debug("Downloading video " + url)
+		editedMessage := telegram.NewEditMessageText(
+			chatID,
+			startMessageID,
+			text,
+		)
+		_, err = c.Tg.Send(&editedMessage)
+		if err != nil {
+			c.Logger.WithError(err).Error("error send message with file downloading status")
+		}
+	})
 
 	c.Logger.WithFields(logger.Fields{
 		"url":       url,
 		"directory": tempDirectory,
 	}).Info("Started download video...")
-	output, err := dl.Run(context.TODO(), url)
+	output, err := dl.Run(ctx, url)
 	if err != nil {
+		if sizeExceeded {
+			return c.handleError(
+				chatID,
+				startMessageID,
+				messageID,
+				errors.New(
+					c.Localizer.Localize("youtube.fileTooBig", map[string]any{
+						"Size":    markdown.Escape(formatFileSize(fileSize)),
+						"MaxSize": strings.TrimSpace(markdown.Escape(c.Cfg.YtDlp().MaxSize)),
+					}),
+				),
+				true,
+			)
+		}
+
 		return c.handleError(
 			chatID,
 			startMessageID,
@@ -271,64 +330,101 @@ func (c *Command) Execute(update telegram.Update) error {
 		metadata,
 		comments,
 	)
+	c.Logger.WithField("size", len(caption)).Debug("Caption size")
+	captionTooLarge := len(caption) > 1500
 
-	var fileSize int64
-	fileSizeStr := ""
-	if file.FileSize != nil {
+	if fileSize == 0 && file.FileSize != nil {
 		fileSize = int64(*file.FileSize)
-		fileSizeStr = formatFileSize(fileSize)
-	} else {
-		fileInfo, err := os.Stat(filePath)
-		if err == nil {
+	}
+
+	fileInfo, err := os.Stat(filePath)
+	if err == nil {
+		if fileSize == 0 {
 			fileSize = int64(fileInfo.Size())
-			fileSizeStr = formatFileSize(fileSize)
-		} else {
-			fileSizeStr = c.Localizer.Localize("youtube.unknownSize", nil)
-		}
-	}
-
-	maxSize, err := parseSize(c.Cfg.YtDlp().MaxSize)
-	mediaTooLarge := err == nil && maxSize > 0 && fileSize > 0 && fileSize > maxSize
-	var outputMessage telegram.Chattable
-	if !mediaTooLarge {
-		message := telegram.NewVideoMessage(
-			update.Message.Chat.ID,
-			tgbotapi.FilePath(filePath),
-			caption,
-			update.Message.MessageID,
-		)
-		message.ParseMode = telegram.ModeMarkdownV2
-		outputMessage = message.ToChattable()
-
-		text := c.Localizer.Localize("youtube.uploadVideoInfo", map[string]any{
-			"FileSize": fileSizeStr,
-		})
-		editedMessage := telegram.NewEditMessageText(
-			chatID,
-			startMessageID,
-			text,
-		)
-		_, err = c.Tg.Send(&editedMessage)
-		if err != nil {
-			c.Logger.WithError(err).Error("error send message with file uploading status")
 		}
 	} else {
-		caption = c.Localizer.Localize("youtube.fileTooBig", map[string]any{
-			"Size":    c.Tg.EscapeText(fileSizeStr),
-			"MaxSize": c.Cfg.YtDlp().MaxSize,
-			"Caption": caption,
-		})
-		message := telegram.NewMessage(chatID, caption, messageID)
-		message.ParseMode = telegram.ModeMarkdownV2
-		message.LinkPreviewDisabled = true
-		outputMessage = message.ToChattable()
+		c.Logger.WithField("error", output.Stderr).Debug("File not downloaded")
 	}
+	fileSizeStr := formatFileSize(fileSize)
 
 	c.Logger.WithFields(logger.Fields{
 		"url":   url,
 		"size":  fileSizeStr,
 		"title": *file.Title,
 	}).Info("Started upload video...")
+
+	maxSize, err := parseSize(c.Cfg.YtDlp().MaxSize)
+	mediaTooLarge := err == nil && maxSize > 0 && fileSize > 0 && fileSize > maxSize
+
+	text = c.Localizer.Localize("youtube.uploadVideoInfo", map[string]any{
+		"FileSize": fileSizeStr,
+	})
+	editedMessage := telegram.NewEditMessageText(
+		chatID,
+		startMessageID,
+		text,
+	)
+	_, err = c.Tg.Send(&editedMessage)
+	if err != nil {
+		c.Logger.WithError(err).Error("error send message with file uploading status")
+	}
+
+	var outputMessage telegram.Chattable
+	if !mediaTooLarge {
+		if captionTooLarge {
+			// multi message answer
+			videoMessage := telegram.NewVideoMessage(
+				update.Message.Chat.ID,
+				tgbotapi.FilePath(filePath),
+				"",
+				update.Message.MessageID,
+			)
+			videoMessage.ParseMode = telegram.ModeMarkdownV2
+			videoMsg, err := c.Tg.Send(videoMessage)
+			if err != nil {
+				return c.handleError(
+					chatID,
+					startMessageID,
+					messageID,
+					fmt.Errorf(
+						"%s\n%s",
+						markdown.Escape(c.L("youtube.failedToSendVideo", nil)),
+						caption,
+					),
+					true,
+				)
+			}
+
+			textMessage := telegram.NewMessage(
+				chatID,
+				caption,
+				videoMsg.MessageID,
+			)
+			textMessage.LinkPreviewDisabled = true
+			textMessage.ParseMode = telegram.ModeMarkdownV2
+			outputMessage = textMessage.ToChattable()
+		} else {
+			// single message
+			message := telegram.NewVideoMessage(
+				update.Message.Chat.ID,
+				tgbotapi.FilePath(filePath),
+				caption,
+				update.Message.MessageID,
+			)
+			message.ParseMode = telegram.ModeMarkdownV2
+			outputMessage = message.ToChattable()
+		}
+	} else {
+		caption = fmt.Sprintf("%s\n\n%s", c.Localizer.Localize("youtube.fileTooBig", map[string]any{
+			"Size":    c.Tg.EscapeText(fileSizeStr),
+			"MaxSize": c.Cfg.YtDlp().MaxSize,
+		}), caption)
+		message := telegram.NewMessage(chatID, caption, messageID)
+		message.ParseMode = telegram.ModeMarkdownV2
+		message.LinkPreviewDisabled = true
+		outputMessage = message.ToChattable()
+	}
+
 	c.Tg.SendChatAction(chatID, telegram.ActionUploadVideo)
 	if _, err := c.Tg.RequestRaw(outputMessage); err != nil {
 		return c.handleError(
@@ -368,7 +464,7 @@ func (c *Command) handleError(chatID int64, startMessageID int, messageID int, o
 	}
 	text := orErr.Error()
 	if text != "" {
-		text = capitalizeFirst(text)
+		text = strings.ToValidUTF8(text, "")
 	}
 	answer := telegram.NewMessage(chatID, text, messageID)
 	answer.LinkPreviewDisabled = true

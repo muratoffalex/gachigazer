@@ -148,7 +148,7 @@ other = "Модель изменена на *{{.ModelName}}*"
 
 # youtube
 [youtube.download.start]
-other = "Скачиваю видео..."
+other = "Скачиваю видео... {{.Info}}"
 [youtube.errorFailDownloadVideo]
 other = "не удалось скачать видео: %v"
 [youtube.errorFailGetFileInfo]
@@ -166,7 +166,7 @@ other = "размер неизвестен"
 [youtube.uploadVideoInfo]
 other = "Загружаю видео... ({{.FileSize}})"
 [youtube.fileTooBig]
-other = "⚠️ *Видео слишком большое \\- {{.Size}}\\. Максимум \\- {{.MaxSize}}\n\n*{{.Caption}}"
+other = "⚠️ *Видео слишком большое \\- {{.Size}}\\. Максимум \\- {{.MaxSize}}*"
 [youtube.failedToSendVideo]
 other = "Ошибка при отправке видео. Текст:"
 

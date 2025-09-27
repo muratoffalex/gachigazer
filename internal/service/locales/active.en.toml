@@ -148,7 +148,7 @@ other = "Model switched to *{{.ModelName}}*"
 
 # youtube
 [youtube.download.start]
-other = "Downloading video..."
+other = "Downloading video... {{.Info}}"
 [youtube.errorFailDownloadVideo]
 other = "failed to download video: %v"
 [youtube.errorFailGetFileInfo]
@@ -166,7 +166,7 @@ other = "size unknown"
 [youtube.uploadVideoInfo]
 other = "Uploading video... ({{.FileSize}})"
 [youtube.fileTooBig]
-other = "⚠️ *Video is too big \\- {{.Size}}\\. Maximum \\- {{.MaxSize}}\n\n*{{.Caption}}"
+other = "⚠️ *Video is too big \\- {{.Size}}\\. Maximum \\- {{.MaxSize}}*"
 [youtube.failedToSendVideo]
 other = "Failed to send video. Text:"
 
