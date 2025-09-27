@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -17,6 +18,10 @@ func ConvertOggToMP3(oggData []byte) ([]byte, error) {
 
 	if err := os.WriteFile(inputFile, oggData, 0o644); err != nil {
 		return nil, err
+	}
+
+	if _, err := exec.LookPath("ffmpeg"); err != nil {
+		return nil, errors.New("ffmpeg not found")
 	}
 
 	cmd := exec.Command("ffmpeg",
