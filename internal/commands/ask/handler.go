@@ -2616,11 +2616,17 @@ func (c *Command) handleTools(ctx context.Context, toolsList []ai.ToolCall, assi
 		}
 
 		var lastErr error
+		retryCount := 0
 		for attempt := 1; attempt <= maxRetries; attempt++ {
+			retryCount++
 			toolLog.WithField("attempt", attempt).Info("Running tool...")
 
 			toolResponse, lastErr = c.runSingleTool(ctx, tool, args, assistantMessage, toolLog)
 			if lastErr == nil {
+				break
+			}
+
+			if strings.Contains(lastErr.Error(), "403") {
 				break
 			}
 
@@ -2634,7 +2640,7 @@ func (c *Command) handleTools(ctx context.Context, toolsList []ai.ToolCall, assi
 			toolLog.WithError(lastErr).Error("All tool attempts failed")
 			toolResponse = fmt.Sprintf(
 				"Tool error after %d attempts: %v",
-				maxRetries,
+				retryCount,
 				lastErr,
 			)
 		}
@@ -2834,7 +2840,7 @@ func (c *Command) runSingleTool(ctx context.Context, tool ai.ToolCall, args map[
 
 	if len(results) > 0 && results[len(results)-1].IsValid() && !results[len(results)-1].IsNil() {
 		if err, ok := results[len(results)-1].Interface().(error); ok {
-			return "", fmt.Errorf("tool error: %w", err)
+			return "", fmt.Errorf("%w", err)
 		}
 	}
 
