@@ -362,11 +362,17 @@ func (f *Fetcher) parseOldReddit(doc *goquery.Document) Response {
 		text := s.Find("div.usertext-body").Text()
 		text = strings.TrimSpace(text)
 
+		commentScore := s.Find("span.score.unvoted").First().Text()
+		commentScore = strings.TrimSpace(commentScore)
+
 		if text != "" {
-			if author != "" {
-				comments.WriteString(fmt.Sprintf("👤 %s: %s\n", author, text))
+			if author == "" {
+				author = "Anonymous"
+			}
+			if commentScore != "" {
+				comments.WriteString(fmt.Sprintf("👤 %s (%s): %s\n", author, commentScore, text))
 			} else {
-				comments.WriteString(fmt.Sprintf("👤 Anonymous: %s\n", text))
+				comments.WriteString(fmt.Sprintf("👤 %s: %s\n", author, text))
 			}
 		}
 	})
