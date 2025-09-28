@@ -509,10 +509,6 @@ type ytdlpConfig struct {
 	DownloadURL   string `koanf:"download_url"`
 }
 
-type databaseConfig struct {
-	DSN string `koanf:"dsn"`
-}
-
 type queueThrottleOptions struct {
 	Period      time.Duration `koanf:"period"`
 	Concurrency int           `koanf:"concurrency"`

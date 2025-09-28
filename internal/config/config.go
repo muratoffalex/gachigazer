@@ -19,48 +19,40 @@ import (
 )
 
 const (
-	GLOBAL_MESSAGE_RETENTION_DAYS     = "global.message_retention_days"
-	GLOBAL_LANGUAGE                   = "global.interface_language"
-	GLOBAL_FIX_INSTAGRAM_PREVIEWS     = "global.fix_instagram_previews"
-	GLOBAL_FIX_X_PREVIEWS             = "global.fix_x_previews"
-	CURRENCY_CODE                     = "currency.code"
-	CURRENCY_SYMBOL                   = "currency.symbol"
-	CURRENCY_PRECISION                = "currency.precision"
-	HTTP_PROXY                        = "http.proxy"
-	AI_SYSTEM_PROMPT                  = "ai.system_prompt"
-	AI_USE_STREAM                     = "ai.use_stream"
-	AI_LANGUAGE                       = "ai.language"
-	AI_PROMPTS                        = "ai.prompts"
-	AI_MODEL_ALIASES                  = "ai.aliases"
-	AI_MODEL_PARAMS                   = "ai.model_params"
-	AI_DEFAULT_MODEL                  = "ai.default_model"
-	AI_UTILITY_MODEL                  = "ai.utility_model"
-	AI_MULTIMODAL_MODEL               = "ai.multimodal_model"
-	AI_MAX_TOKENS                     = "ai.model_params.max_tokens"
-	AI_PROVIDERS                      = "ai.providers"
-	AI_MAX_IMAGES_IN_CONTEXT          = "ai.max_images_in_context"
-	AI_USE_MULTIMODAL_AUTO            = "ai.use_multimodal_auto"
-	AI_TOOLS_MAX_ITERATIONS           = "ai.tools_max_iterations"
-	TELEGRAM_TOKEN                    = "telegram.token"
-	TELEGRAM_ALLOWED_USERS            = "telegram.allowed_users"
-	TELEGRAM_ALLOWED_CHATS            = "telegram.allowed_chats"
-	TELEGRAM_TD_ENABLED               = "telegram.td_enabled"
-	TELEGRAM_SESSION_PATH             = "telegram.session_path"
-	TELEGRAMIFY_SCRIPT_PATH           = "telegram.telegramify_script_path"
-	INSTAGRAM_USERNAME                = "instagram.username"
-	INSTAGRAM_PASSWORD                = "instagram.password"
-	INSTAGRAM_SESSION_PATH            = "instagram.session_path"
-	INSTAGRAM_SESSIN_REFRESH_INTERVAL = "instagram.session_refresh_interval"
-	CHROME_ENABLED                    = "chrome.enabled"
-	CHROME_PATH                       = "chrome.path"
-	CHROME_OPTS                       = "chrome.opts"
-	YTDLP_MAX_SIZE                    = "ytdlp.max_size"
-	YTDLP_TEMP_DIRECTORY              = "ytdlp.temp_directory"
-	YTDLP_DOWNLOAD_URL                = "ytdlp.download_url"
-	DATABASE_DSN                      = "database.dsn"
-	LOGGING_LEVEL                     = "logging.level"
-	LOGGING_WRITE_IN_FILE             = "logging.write_in_file"
-	LOGGING_FILE_PATH                 = "logging.file_path"
+	globalMessageRetentionDays      = "global.message_retention_days"
+	globalLanguage                  = "global.interface_language"
+	globalFixInstagramPreviews      = "global.fix_instagram_previews"
+	globalFixXPreviews              = "global.fix_x_previews"
+	currencyCode                    = "currency.code"
+	currencySymbol                  = "currency.symbol"
+	currencyPrecision               = "currency.precision"
+	httpProxy                       = "http.proxy"
+	aiSystemPrompt                  = "ai.system_prompt"
+	aiUseStream                     = "ai.use_stream"
+	aiLanguage                      = "ai.language"
+	aiUtilityModel                  = "ai.utility_model"
+	aiMultimodalModel               = "ai.multimodal_model"
+	aiMaxTokens                     = "ai.model_params.max_tokens"
+	aiMaxImagesInContext            = "ai.max_images_in_context"
+	aiUseMultimodalAuto             = "ai.use_multimodal_auto"
+	aiToolsMaxIterations            = "ai.tools_max_iterations"
+	telegramToken                   = "telegram.token"
+	telegramTdEnabled               = "telegram.td_enabled"
+	telegramSessionPath             = "telegram.session_path"
+	instagramUsername               = "instagram.username"
+	instagramPassword               = "instagram.password"
+	instagramSessionPath            = "instagram.session_path"
+	instagramSessionRefreshInterval = "instagram.session_refresh_interval"
+	chromeEnabled                   = "chrome.enabled"
+	chromePath                      = "chrome.path"
+	chromeOpts                      = "chrome.opts"
+	ytdlpMaxSize                    = "ytdlp.max_size"
+	ytdlpTempDirectory              = "ytdlp.temp_directory"
+	ytdlpDownloadURL                = "ytdlp.download_url"
+	databaseDsn                     = "database.dsn"
+	loggingLevel                    = "logging.level"
+	loggingWriteInFile              = "logging.write_in_file"
+	loggingFilePath                 = "logging.file_path"
 )
 
 var defaultSQLiteParams = map[string]string{
@@ -85,34 +77,34 @@ func Load() (*Config, error) {
 	k := koanf.New(".")
 
 	defaults := map[string]any{
-		GLOBAL_MESSAGE_RETENTION_DAYS: 1,
-		GLOBAL_LANGUAGE:               "en",
-		GLOBAL_FIX_INSTAGRAM_PREVIEWS: true,
-		GLOBAL_FIX_X_PREVIEWS:         true,
-		CURRENCY_PRECISION:            7,
-		TELEGRAM_TOKEN:                "",
-		TELEGRAM_TD_ENABLED:           false,
-		TELEGRAM_SESSION_PATH:         "tg_session.json",
-		HTTP_PROXY:                    nil,
-		INSTAGRAM_SESSION_PATH:        "instagram_session.json",
-		DATABASE_DSN:                  "bot.db?_journal=WAL&_busy_timeout=5000&_synchronous=NORMAL&_cache=shared",
-		LOGGING_LEVEL:                 "info",
-		LOGGING_WRITE_IN_FILE:         false,
-		YTDLP_MAX_SIZE:                "50M", // max size for normal bots without special permission
-		YTDLP_TEMP_DIRECTORY:          "",
-		YTDLP_DOWNLOAD_URL:            "", // Leave empty to use GitHub + auto-detected os/arch.
-		AI_SYSTEM_PROMPT:              "",
-		AI_LANGUAGE:                   "English",
-		AI_USE_STREAM:                 true,
-		AI_MAX_TOKENS:                 850,
-		AI_MAX_IMAGES_IN_CONTEXT:      5,
-		AI_UTILITY_MODEL:              "",
-		AI_MULTIMODAL_MODEL:           "",
-		AI_USE_MULTIMODAL_AUTO:        false,
-		AI_TOOLS_MAX_ITERATIONS:       1,
-		CHROME_ENABLED:                false,
-		CHROME_PATH:                   getDefaultChromePath(),
-		CHROME_OPTS: []string{
+		globalMessageRetentionDays: 1,
+		globalLanguage:             "en",
+		globalFixInstagramPreviews: true,
+		globalFixXPreviews:         true,
+		currencyPrecision:          7,
+		telegramToken:              "",
+		telegramTdEnabled:          false,
+		telegramSessionPath:        "tg_session.json",
+		httpProxy:                  nil,
+		instagramSessionPath:       "instagram_session.json",
+		databaseDsn:                "bot.db?_journal=WAL&_busy_timeout=5000&_synchronous=NORMAL&_cache=shared",
+		loggingLevel:               "info",
+		loggingWriteInFile:         false,
+		ytdlpMaxSize:               "50M", // max size for normal bots without special permission
+		ytdlpTempDirectory:         "",
+		ytdlpDownloadURL:           "", // Leave empty to use GitHub + auto-detected os/arch.
+		aiSystemPrompt:             "",
+		aiLanguage:                 "English",
+		aiUseStream:                true,
+		aiMaxTokens:                850,
+		aiMaxImagesInContext:       5,
+		aiUtilityModel:             "",
+		aiMultimodalModel:          "",
+		aiUseMultimodalAuto:        false,
+		aiToolsMaxIterations:       1,
+		chromeEnabled:              false,
+		chromePath:                 getDefaultChromePath(),
+		chromeOpts: []string{
 			"--headless",
 			"--disable-gpu",
 			"--no-sandbox",
@@ -184,7 +176,7 @@ func Load() (*Config, error) {
 		)
 	}), nil)
 
-	if k.Get(TELEGRAM_TOKEN) == "" {
+	if k.Get(telegramToken) == "" {
 		return nil, fmt.Errorf("telegram token is required")
 	}
 
@@ -277,46 +269,47 @@ func (c *Config) Telegram() TelegramConfig {
 
 func (c *Config) Instagram() instagramConfig {
 	return instagramConfig{
-		Username:               c.k.String(INSTAGRAM_USERNAME),
-		Password:               c.k.String(INSTAGRAM_PASSWORD),
-		SessionPath:            c.k.String(INSTAGRAM_SESSION_PATH),
-		SessionRefreshInterval: c.k.Duration(INSTAGRAM_SESSIN_REFRESH_INTERVAL),
+		Username:               c.k.String(instagramUsername),
+		Password:               c.k.String(instagramPassword),
+		SessionPath:            c.k.String(instagramSessionPath),
+		SessionRefreshInterval: c.k.Duration(instagramSessionRefreshInterval),
 	}
 }
 
 func (c *Config) YtDlp() ytdlpConfig {
 	return ytdlpConfig{
-		MaxSize:       c.k.String(YTDLP_MAX_SIZE),
-		TempDirectory: c.k.String(YTDLP_TEMP_DIRECTORY),
-		DownloadURL:   c.k.String(YTDLP_DOWNLOAD_URL),
+		MaxSize:       c.k.String(ytdlpMaxSize),
+		TempDirectory: c.k.String(ytdlpTempDirectory),
+		DownloadURL:   c.k.String(ytdlpDownloadURL),
 	}
 }
 
 func (c *Config) Chrome() chromeConfig {
 	return chromeConfig{
-		Path: c.k.String(CHROME_PATH),
-		Opts: c.k.Strings(CHROME_OPTS),
+		Enabled: c.k.Bool(chromeEnabled),
+		Path:    c.k.String(chromePath),
+		Opts:    c.k.Strings(chromeOpts),
 	}
 }
 
 func (c *Config) Currency() CurrencyConfig {
 	return CurrencyConfig{
-		Code:      c.k.String(CURRENCY_CODE),
-		Symbol:    c.k.String(CURRENCY_SYMBOL),
-		Precision: c.k.Int(CURRENCY_PRECISION),
+		Code:      c.k.String(currencyCode),
+		Symbol:    c.k.String(currencySymbol),
+		Precision: c.k.Int(currencyPrecision),
 	}
 }
 
 func (c *Config) Log() LoggingConfig {
 	return LoggingConfig{
-		LogLevel:    c.k.String(LOGGING_LEVEL),
-		WriteInFile: c.k.Bool(LOGGING_WRITE_IN_FILE),
-		FilePath:    c.k.String(LOGGING_FILE_PATH),
+		LogLevel:    c.k.String(loggingLevel),
+		WriteInFile: c.k.Bool(loggingWriteInFile),
+		FilePath:    c.k.String(loggingFilePath),
 	}
 }
 
 func (c *Config) GetDatabaseDSN() string {
-	dsn := c.k.String(DATABASE_DSN)
+	dsn := c.k.String(databaseDsn)
 	parts := strings.Split(dsn, "?")
 	path := parts[0]
 
@@ -349,16 +342,16 @@ func (c *Config) GetDatabaseDSN() string {
 
 func (c *Config) Global() globalConfig {
 	return globalConfig{
-		MessageRetentionDays: c.k.Int(GLOBAL_MESSAGE_RETENTION_DAYS),
-		InterfaceLanguage:    c.k.String(GLOBAL_LANGUAGE),
-		FixInstagramPreviews: c.k.Bool(GLOBAL_FIX_INSTAGRAM_PREVIEWS),
-		FixXPreviews:         c.k.Bool(GLOBAL_FIX_X_PREVIEWS),
+		MessageRetentionDays: c.k.Int(globalMessageRetentionDays),
+		InterfaceLanguage:    c.k.String(globalLanguage),
+		FixInstagramPreviews: c.k.Bool(globalFixInstagramPreviews),
+		FixXPreviews:         c.k.Bool(globalFixXPreviews),
 	}
 }
 
 func (c *Config) HTTP() HTTPConfig {
 	var proxy string
-	if proxyValue := c.k.Get(HTTP_PROXY); proxyValue != nil {
+	if proxyValue := c.k.Get(httpProxy); proxyValue != nil {
 		proxy = proxyValue.(string)
 	}
 
