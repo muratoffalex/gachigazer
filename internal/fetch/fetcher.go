@@ -282,6 +282,22 @@ func (f *Fetcher) parseOldReddit(doc *goquery.Document) Response {
 
 	siteTable := doc.Find("div#siteTable")
 
+	score := siteTable.Find("div.score.unvoted").First().Text()
+	score = strings.TrimSpace(score)
+
+	var metadataParts []string
+	siteTable.Find("p.tagline").First().Each(func(i int, s *goquery.Selection) {
+		author := s.Find("a.author").Text()
+		absoluteTime, timeExists := s.Find("time").Attr("datetime")
+
+		if author != "" {
+			metadataParts = append(metadataParts, "Posted by "+author)
+		}
+		if timeExists {
+			metadataParts = append(metadataParts, "at "+absoluteTime)
+		}
+	})
+
 	var postText strings.Builder
 	siteTable.Find("div.usertext-body").Each(func(i int, s *goquery.Selection) {
 		if i == 0 {
@@ -344,18 +360,29 @@ func (f *Fetcher) parseOldReddit(doc *goquery.Document) Response {
 		}
 		author := s.Find("a.author").First().Text()
 		text := s.Find("div.usertext-body").Text()
-		comments.WriteString(fmt.Sprintf(
-			"Comment from %s:\n%s\n\n",
-			author,
-			strings.TrimSpace(text),
-		))
+		text = strings.TrimSpace(text)
+
+		if text != "" {
+			if author != "" {
+				comments.WriteString(fmt.Sprintf("👤 %s: %s\n", author, text))
+			} else {
+				comments.WriteString(fmt.Sprintf("👤 Anonymous: %s\n", text))
+			}
+		}
 	})
 
 	var parts []string
 
 	if title := strings.TrimSpace(title); title != "" {
-		parts = append(parts, "TITLE:\n"+title)
+		parts = append(parts, "TITLE: "+title)
 	}
+
+	info := strings.Join(metadataParts, " ")
+	if score != "" {
+		info += ", " + score + " points"
+	}
+
+	parts = append(parts, "INFO: "+info)
 
 	if text := strings.TrimSpace(postText.String()); text != "" {
 		parts = append(parts, "TEXT:\n"+text)
@@ -369,7 +396,7 @@ func (f *Fetcher) parseOldReddit(doc *goquery.Document) Response {
 		parts = append(parts, "COMMENTS:\n"+cmts)
 	}
 
-	fullText := strings.Join(parts, "\n\n")
+	fullText := strings.Join(parts, "\n")
 
 	if fullText == "" {
 		return Response{
