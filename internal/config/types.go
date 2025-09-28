@@ -242,6 +242,7 @@ func (c *AIProviderConfig) GetAPIKey() string {
 
 type aiConfig struct {
 	SystemPrompt       string             `koanf:"system_prompt"`
+	ExtraSystemPrompt  string             `koanf:"extra_system_prompt"`
 	Language           string             `koanf:"language"`
 	UseStream          bool               `koanf:"use_stream"`
 	ModelParams        aiModelParams      `koanf:"model_params"`
