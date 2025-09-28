@@ -241,24 +241,21 @@ func (c *AIProviderConfig) GetAPIKey() string {
 }
 
 type aiConfig struct {
-	SystemPrompt       string             `koanf:"system_prompt"`
-	ExtraSystemPrompt  string             `koanf:"extra_system_prompt"`
-	Language           string             `koanf:"language"`
-	UseStream          bool               `koanf:"use_stream"`
-	ModelParams        aiModelParams      `koanf:"model_params"`
-	DefaultModel       string             `koanf:"default_model"`
-	UtilityModel       string             `koanf:"utility_model"`    // generating titles and summaries
-	MultimodalModel    string             `koanf:"multimodal_model"` // use for handle context with images
-	ToolsModel         string             `koanf:"tools_model"`      // use for handle tools
-	UseMultimodalAuto  bool               `koanf:"use_multimodal_auto"`
-	ImageRouterAPIKey  string             `koanf:"imagerouter_api_key"`
-	ImageRouterModel   string             `koanf:"imagerouter_model"`
-	Providers          []AIProviderConfig `koanf:"providers"`
-	Prompts            []aiPrompt         `koanf:"prompts"`
-	Aliases            []aiModelAlias     `koanf:"aliases"`
-	ToolsMaxIterations int                `koanf:"tools_max_iterations"`
-	AllowedTools       []string           `koanf:"allowed_tools"`
-	ExcludedTools      []string           `koanf:"excluded_tools"`
+	SystemPrompt      string             `koanf:"system_prompt"`
+	ExtraSystemPrompt string             `koanf:"extra_system_prompt"`
+	Language          string             `koanf:"language"`
+	UseStream         bool               `koanf:"use_stream"`
+	ModelParams       aiModelParams      `koanf:"model_params"`
+	DefaultModel      string             `koanf:"default_model"`
+	UtilityModel      string             `koanf:"utility_model"`    // generating titles and summaries
+	MultimodalModel   string             `koanf:"multimodal_model"` // use for handle context with images
+	ToolsModel        string             `koanf:"tools_model"`      // use for handle tools
+	UseMultimodalAuto bool               `koanf:"use_multimodal_auto"`
+	ImageRouterAPIKey string             `koanf:"imagerouter_api_key"`
+	ImageRouterModel  string             `koanf:"imagerouter_model"`
+	Providers         []AIProviderConfig `koanf:"providers"`
+	Prompts           []aiPrompt         `koanf:"prompts"`
+	Aliases           []aiModelAlias     `koanf:"aliases"`
 }
 
 func (c aiConfig) GetPromptText() string {
@@ -555,6 +552,14 @@ type askFetcherOptions struct {
 	Blacklist []string `koanf:"blacklist"`
 }
 
+type askToolsOptions struct {
+	Enabled       bool     `koanf:"enabled"`
+	AutoRun       bool     `koanf:"auto_run"`
+	MaxIterations int      `koanf:"max_iterations"`
+	Allowed       []string `koanf:"allowed"`
+	Excluded      []string `koanf:"excluded"`
+}
+
 func (f askFetcherOptions) inWhitelist(URL string) bool {
 	for _, part := range f.Whitelist {
 		if strings.Contains(URL, part) {
@@ -599,6 +604,7 @@ type AskCommandConfig struct {
 	Images              askImagesOptions  `koanf:"images"`
 	Audio               askAudioOptions   `koanf:"audio"`
 	Files               askFilesOptions   `koanf:"files"`
+	Tools               askToolsOptions   `koanf:"tools"`
 }
 
 type rCommandConfig struct {

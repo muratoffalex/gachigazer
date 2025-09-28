@@ -35,7 +35,6 @@ const (
 	aiMaxTokens                     = "ai.model_params.max_tokens"
 	aiMaxImagesInContext            = "ai.max_images_in_context"
 	aiUseMultimodalAuto             = "ai.use_multimodal_auto"
-	aiToolsMaxIterations            = "ai.tools_max_iterations"
 	telegramToken                   = "telegram.token"
 	telegramTdEnabled               = "telegram.td_enabled"
 	telegramSessionPath             = "telegram.session_path"
@@ -101,7 +100,6 @@ func Load() (*Config, error) {
 		aiUtilityModel:             "",
 		aiMultimodalModel:          "",
 		aiUseMultimodalAuto:        false,
-		aiToolsMaxIterations:       1,
 		chromeEnabled:              false,
 		chromePath:                 getDefaultChromePath(),
 		chromeOpts: []string{
@@ -147,6 +145,9 @@ func Load() (*Config, error) {
 		"commands.ask.images.enabled":                       true,
 		"commands.ask.images.max":                           5,
 		"commands.ask.images.lifetime":                      0 * time.Minute,
+		"commands.ask.tools.enabled":                        true,
+		"commands.ask.tools.auto_run":                       false,
+		"commands.ask.tools.max_iterations":                 1,
 		"commands.ask.queue.enabled":                        true,
 		"commands.ask.queue.timeout":                        2 * time.Minute,
 		"commands.ask.queue.max_retries":                    0,
@@ -245,6 +246,13 @@ func (c *Config) GetAskCommandConfig() *AskCommandConfig {
 			Context:   c.k.Bool("commands.ask.display.context"),
 			Reasoning: c.k.Bool("commands.ask.display.reasoning"),
 			Separator: c.k.String("commands.ask.display.separator"),
+		},
+		Tools: askToolsOptions{
+			Enabled:       c.k.Bool("commands.ask.tools.enabled"),
+			AutoRun:       c.k.Bool("commands.ask.tools.auto_run"),
+			Allowed:       c.k.Strings("commands.ask.tools.allowed"),
+			Excluded:      c.k.Strings("commands.ask.tools.excluded"),
+			MaxIterations: c.k.Int("commands.ask.tools.max_iterations"),
 		},
 	}
 }

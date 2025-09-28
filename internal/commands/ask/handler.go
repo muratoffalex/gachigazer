@@ -22,6 +22,7 @@ import (
 	"github.com/muratoffalex/gachigazer/internal/ai/tools"
 	"github.com/muratoffalex/gachigazer/internal/app/di"
 	"github.com/muratoffalex/gachigazer/internal/commands/base"
+	"github.com/muratoffalex/gachigazer/internal/config"
 	"github.com/muratoffalex/gachigazer/internal/database"
 	"github.com/muratoffalex/gachigazer/internal/fetch"
 	"github.com/muratoffalex/gachigazer/internal/logger"
@@ -56,6 +57,7 @@ type Command struct {
 	httpClient    *http.Client
 	retryCount    int
 	args          *CommandArgs
+	cmdCfg        *config.AskCommandConfig
 }
 
 func (c *Command) Name() string {
@@ -71,10 +73,12 @@ func (c *Command) Aliases() []string {
 func New(di *di.Container) *Command {
 	promptAliases := di.Cfg.AI().GetAllAliases()
 	promptAliases = append(promptAliases, "help")
-	availableTools := strings.Join(tools.ToolNames(di.Cfg.AI().AllowedTools, di.Cfg.AI().ExcludedTools), ", ")
+	toolsCfg := di.Cfg.GetAskCommandConfig().Tools
+	availableTools := strings.Join(tools.ToolNames(toolsCfg.Allowed, toolsCfg.Excluded), ", ")
 	cmd := &Command{
 		fetcher:    di.Fetcher,
 		httpClient: di.HttpClient,
+		cmdCfg:     di.Cfg.GetAskCommandConfig(),
 		supportedArgs: []Argument{
 			{
 				Name:        "m",
@@ -295,6 +299,9 @@ func (c *Command) Execute(update telegram.Update) error {
 	case "help":
 		command = "a"
 		currentContent.Args["p"] = "help"
+	}
+	if c.cmdCfg.Tools.AutoRun {
+		currentContent.Args["tools"] = "yes"
 	}
 	c.args, err = c.mapArgsToStruct(currentContent.Args)
 	if err != nil {
@@ -764,7 +771,7 @@ func (c *Command) Execute(update telegram.Update) error {
 		}).Info("Saved user message")
 	}
 
-	if c.Cfg.AI().UseMultimodalAuto && len(currentContent.GetAllMedia(c.Cfg.GetAskCommandConfig(), c.args)) > 0 && c.args.Model == "" && len(currentContent.Tools) == 0 {
+	if c.Cfg.AI().UseMultimodalAuto && len(currentContent.GetAllMedia(c.cmdCfg, c.args)) > 0 && c.args.Model == "" && len(currentContent.Tools) == 0 {
 		modelName := c.Cfg.AI().MultimodalModel
 		multiModel, err := c.ai.GetFormattedModel(ctx, modelName, "")
 		if err != nil {
@@ -893,7 +900,7 @@ func (c *Command) Execute(update telegram.Update) error {
 		}
 	}
 
-	currentContent.Media = currentContent.GetAllMedia(c.Cfg.GetAskCommandConfig(), c.args)
+	currentContent.Media = currentContent.GetAllMedia(c.cmdCfg, c.args)
 	// Add media info to context
 	if len(currentContent.Media) > 0 {
 		for _, media := range currentContent.GetImagesMedia() {
@@ -955,10 +962,10 @@ func (c *Command) Execute(update telegram.Update) error {
 	// Build final message using builder
 	builder := NewMessageBuilder(c.Tg, c.Localizer).
 		SetResponse(response).
-		WithMetadata(c.Cfg.GetAskCommandConfig().Display.Metadata).
-		WithContext(c.Cfg.GetAskCommandConfig().Display.Context).
-		WithReasoning(c.Cfg.GetAskCommandConfig().Display.Reasoning).
-		SetSeparator(c.Cfg.GetAskCommandConfig().Display.Separator)
+		WithMetadata(c.cmdCfg.Display.Metadata).
+		WithContext(c.cmdCfg.Display.Context).
+		WithReasoning(c.cmdCfg.Display.Reasoning).
+		SetSeparator(c.cmdCfg.Display.Separator)
 
 	if reasoning := c.args.Reasoning; reasoning != nil {
 		builder.config.ShowReasoning = *reasoning
@@ -978,7 +985,7 @@ func (c *Command) Execute(update telegram.Update) error {
 				functionCallName = functionName + toolNumber
 			}
 			c.Logger.Debug("Tool name " + functionName)
-			if slices.Contains(tools.ToolNames(c.Cfg.AI().AllowedTools, c.Cfg.AI().ExcludedTools), functionName) {
+			if slices.Contains(tools.ToolNames(c.cmdCfg.Tools.Allowed, c.cmdCfg.Tools.Excluded), functionName) {
 				toolCallNumber++
 				button := telegram.NewInlineKeyboardButtonData(
 					fmt.Sprintf(ai.Tools+" Run %s", functionCallName),
@@ -1492,7 +1499,7 @@ Critical format rules:
 3. Show complete tool syntax
 4. Always number tools when multiple tools are provided, number must be part of the tool name (e.g., name@1)
 5. Always include both text and button options
-6. Tools always in correct format (one-line without json tags)`, tools.AvailableToolsText(c.Cfg.AI().AllowedTools, c.Cfg.AI().ExcludedTools))
+6. Tools always in correct format (one-line without json tags)`, tools.AvailableToolsText(c.cmdCfg.Tools.Allowed, c.cmdCfg.Tools.Excluded))
 	}
 
 	systemInstructions := `You are Gachigazer⭐, a Telegram AI assistant. Current date: {{date}}, time: {{time}}.
@@ -1527,8 +1534,8 @@ You MUST follow the Markdown rules. STRICTLY RESPOND IN: {{language}}. NEVER swi
 	}
 	messages = append(messages, systemMessage)
 
-	maxImages := c.Cfg.GetAskCommandConfig().Images.Max
-	maxAudio := c.Cfg.GetAskCommandConfig().Audio.MaxInHistory
+	maxImages := c.cmdCfg.Images.Max
+	maxAudio := c.cmdCfg.Audio.MaxInHistory
 	allowedImagesCount := maxImages - len(currentContent.GetImagesMedia())
 	allowedAudioCount := maxAudio - len(currentContent.GetAudioMedia())
 
@@ -1536,7 +1543,7 @@ You MUST follow the Markdown rules. STRICTLY RESPOND IN: {{language}}. NEVER swi
 	imagesInHistoryCount := 0
 	audioInHistoryCount := 0
 	historyMessages := []ai.Message{}
-	imageLifetime := c.Cfg.GetAskCommandConfig().Images.Lifetime
+	imageLifetime := c.cmdCfg.Images.Lifetime
 	for _, msg := range history {
 		if !msg.Role.Supported() {
 			c.Logger.WithField("role", msg.Role).Warn("Unsupported role")
@@ -1857,7 +1864,7 @@ func (c *Command) handleURLs(currentContent *MessageContent, chatID int64, recur
 			} else {
 				state.TrimmedContent = text
 			}
-			maxLength := c.Cfg.GetAskCommandConfig().Fetcher.MaxLength
+			maxLength := c.cmdCfg.Fetcher.MaxLength
 			if maxLength != 0 && len(content.Content[0].Text) > maxLength {
 				content.Content[0].Text = content.Content[0].Text[:maxLength] + "...[truncated]"
 			}
@@ -2182,10 +2189,10 @@ func (c *Command) AskStream(
 
 func (c *Command) mapArgsToStruct(argsMap map[string]string) (*CommandArgs, error) {
 	args := &CommandArgs{
-		HandleImages: c.Cfg.GetAskCommandConfig().Images.Enabled,
-		HandleAudio:  c.Cfg.GetAskCommandConfig().Audio.Enabled,
-		HandleFiles:  c.Cfg.GetAskCommandConfig().Files.Enabled,
-		HandleURLs:   c.Cfg.GetAskCommandConfig().Fetcher.Enabled,
+		HandleImages: c.cmdCfg.Images.Enabled,
+		HandleAudio:  c.cmdCfg.Audio.Enabled,
+		HandleFiles:  c.cmdCfg.Files.Enabled,
+		HandleURLs:   c.cmdCfg.Fetcher.Enabled,
 	}
 	if argsMap == nil {
 		argsMap = map[string]string{}
@@ -2414,7 +2421,7 @@ func (c *Command) generateConversationTitle(ctx context.Context, text string, ch
 		return text, "initial"
 	}
 
-	generateTitle := c.Cfg.GetAskCommandConfig().GenerateTitleWithAI
+	generateTitle := c.cmdCfg.GenerateTitleWithAI
 	if generateTitle {
 		modelName := c.Cfg.AI().GetUtilityModel()
 		model, _ := c.ai.GetFormattedModel(ctx, modelName, "")
@@ -2446,7 +2453,7 @@ Text:
 
 func (c *Command) getTools(toolsList []string) []ai.Tool {
 	responseTools := []ai.Tool{}
-	for name, tool := range tools.AvailableTools(c.Cfg.AI().AllowedTools, c.Cfg.AI().ExcludedTools) {
+	for name, tool := range tools.AvailableTools(c.cmdCfg.Tools.Allowed, c.cmdCfg.Tools.Excluded) {
 		if len(toolsList) == 0 || slices.Contains(toolsList, name) {
 			responseTools = append(responseTools, tool)
 		}
@@ -2470,7 +2477,7 @@ func (c *Command) handleRequest(
 	// TODO: move to config
 	maxRetries := 2
 	// first iteration - basic tools request, second iteration - request with tools results
-	maxIterations := c.Cfg.AI().ToolsMaxIterations + 1
+	maxIterations := c.cmdCfg.Tools.MaxIterations + 1
 	params = customParams
 	totalUsage = &MetadataUsage{}
 	requestTools := currentContent.Tools
@@ -3078,7 +3085,7 @@ The *video* command
 
 Fetches videos from yt-dlp supported sources (YouTube, Twitch clips, Instagram reels etc). Includes metadata (views, likes, date) and top comments (if available). Max size 50MB - suitable for short clips and medium YouTube videos (fetches in lowest quality).`,
 		c.Cfg.AI().GetPromptText(),
-		tools.AvailableToolsText(c.Cfg.AI().AllowedTools, c.Cfg.AI().ExcludedTools),
+		tools.AvailableToolsText(c.cmdCfg.Tools.Allowed, c.cmdCfg.Tools.Excluded),
 		c.generateArgumentsHelpText(),
 	)
 }
