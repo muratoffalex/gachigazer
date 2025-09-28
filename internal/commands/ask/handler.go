@@ -300,7 +300,9 @@ func (c *Command) Execute(update telegram.Update) error {
 		command = "a"
 		currentContent.Args["p"] = "help"
 	}
-	if c.cmdCfg.Tools.AutoRun {
+	if !c.cmdCfg.Tools.Enabled {
+		delete(currentContent.Args, "tools")
+	} else if _, exists := currentContent.Args["tools"]; !exists && c.cmdCfg.Tools.AutoRun {
 		currentContent.Args["tools"] = "yes"
 	}
 	c.args, err = c.mapArgsToStruct(currentContent.Args)
@@ -1455,7 +1457,7 @@ Technical notes:
 5. Keep responses under 4000 characters (Telegram limit)
 6. Use tools with parameters in English`
 
-	if len(currentContent.Tools) == 0 {
+	if c.cmdCfg.Tools.Enabled && len(currentContent.Tools) == 0 && len(tools.AvailableTools(c.cmdCfg.Tools.Allowed, c.cmdCfg.Tools.Excluded)) > 0 {
 		defaultSystemInstructions += fmt.Sprintf(`
 [Tool Integration Protocol]
 Available functions:
