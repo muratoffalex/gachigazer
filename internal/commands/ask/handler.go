@@ -1795,6 +1795,11 @@ func (c *Command) handleURLs(currentContent *MessageContent, chatID int64, recur
 	c.Logger.WithFields(logger.Fields{
 		"chat_id": chatID,
 	}).Info("Handling URLs in message content")
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	urlsToProcess := make([]string, 0)
+
 	for url, state := range currentContent.URLs {
 		urlInHistory := false
 		for _, msg := range currentContent.ConversationHistory {
@@ -1810,15 +1815,25 @@ func (c *Command) handleURLs(currentContent *MessageContent, chatID int64, recur
 		}
 
 		if !urlInHistory {
-			if state.IsProcessed() {
-				continue
-			}
+			urlsToProcess = append(urlsToProcess, url)
 			state.MarkProcessing()
+		}
+	}
+	for _, url := range urlsToProcess {
+		wg.Add(1)
+		go func(url string) {
+			defer wg.Done()
+
 			c.Logger.WithFields(logger.Fields{
 				"chat_id": chatID,
 				"url":     url,
 			}).Debug("Fetching URL content")
 			content := c.fetcher.Txt(fetch.RequestPayload{URL: url})
+
+			mu.Lock()
+			defer mu.Unlock()
+
+			state := currentContent.URLs[url]
 			if content.IsError {
 				c.Logger.WithField("content", content.Content).Error("Fail fetch URL")
 				state.MarkFailed(content.GetText())
@@ -1854,7 +1869,6 @@ func (c *Command) handleURLs(currentContent *MessageContent, chatID int64, recur
 					urls, _, _ = c.filterURLs(urls)
 					currentContent.AddURLs(urls...)
 				}
-				currentContent, _ = c.handleURLs(currentContent, chatID, false)
 			}
 
 			// handle important urls
@@ -1862,7 +1876,6 @@ func (c *Command) handleURLs(currentContent *MessageContent, chatID int64, recur
 			if len(URLs) > 0 {
 				urls, _, _ := c.filterURLs(URLs)
 				currentContent.AddURLs(urls...)
-				currentContent, _ = c.handleURLs(currentContent, chatID, false)
 			}
 
 			images := content.GetImages()
@@ -1871,6 +1884,20 @@ func (c *Command) handleURLs(currentContent *MessageContent, chatID int64, recur
 					currentContent.AddImageURLs(imgURL)
 				}
 			}
+		}(url)
+	}
+
+	wg.Wait()
+
+	if recursive {
+		var newURLs []string
+		for url, state := range currentContent.URLs {
+			if !state.IsProcessed() {
+				newURLs = append(newURLs, url)
+			}
+		}
+		if len(newURLs) > 0 {
+			currentContent, _ = c.handleURLs(currentContent, chatID, false)
 		}
 	}
 
