@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -2601,71 +2602,104 @@ func (c *Command) handleTools(ctx context.Context, toolsList []ai.ToolCall, assi
 	// NOTE: HANDLE TOOLS
 	const maxRetries = 3
 	response := []ai.Message{}
-	for _, tool := range toolsList {
-		var toolResponse string
-		var toolResponseMsg ai.Message
-		toolLog := c.Logger.WithFields(logger.Fields{
-			"function":  tool.Function.Name,
-			"tool_id":   tool.ID,
-			"tool_body": tool,
-		})
-		args, err := tool.Function.GetArguments()
-		if err != nil {
-			toolLog.WithError(err).Error("Args unmarshal error")
-			continue
-		}
 
-		var lastErr error
-		retryCount := 0
-		for attempt := 1; attempt <= maxRetries; attempt++ {
-			retryCount++
-			toolLog.WithField("attempt", attempt).Info("Running tool...")
+	type toolResult struct {
+		index    int
+		response ai.Message
+		err      error
+	}
 
-			toolResponse, lastErr = c.runSingleTool(ctx, tool, args, assistantMessage, toolLog)
-			if lastErr == nil {
-				break
+	resultChan := make(chan toolResult, len(toolsList))
+	var wg sync.WaitGroup
+
+	for i, tool := range toolsList {
+		wg.Add(1)
+		go func(idx int, tool ai.ToolCall) {
+			defer wg.Done()
+
+			var toolResponse string
+			var toolResponseMsg ai.Message
+			toolLog := c.Logger.WithFields(logger.Fields{
+				"function":  tool.Function.Name,
+				"tool_id":   tool.ID,
+				"tool_body": tool,
+			})
+			args, err := tool.Function.GetArguments()
+			if err != nil {
+				toolLog.WithError(err).Error("Args unmarshal error")
+				resultChan <- toolResult{index: idx, err: err}
+				return
 			}
 
-			if strings.Contains(lastErr.Error(), "403") {
-				break
+			var lastErr error
+			retryCount := 0
+			for attempt := 1; attempt <= maxRetries; attempt++ {
+				retryCount++
+				toolLog.WithField("attempt", attempt).Info("Running tool...")
+
+				toolResponse, lastErr = c.runSingleTool(ctx, tool, args, assistantMessage, toolLog)
+				if lastErr == nil {
+					break
+				}
+
+				if strings.Contains(lastErr.Error(), "403") {
+					break
+				}
+
+				toolLog.WithError(lastErr).Warn(fmt.Sprintf("Tool attempt %d failed", attempt))
+				if attempt < maxRetries {
+					time.Sleep(time.Second * time.Duration(attempt)) // Exponential backoff
+				}
 			}
 
-			toolLog.WithError(lastErr).Warn(fmt.Sprintf("Tool attempt %d failed", attempt))
-			if attempt < maxRetries {
-				time.Sleep(time.Second * time.Duration(attempt)) // Exponential backoff
+			if lastErr != nil {
+				toolLog.WithError(lastErr).Error("All tool attempts failed")
+				toolResponse = fmt.Sprintf(
+					"Tool error after %d attempts: %v",
+					retryCount,
+					lastErr,
+				)
 			}
-		}
 
-		if lastErr != nil {
-			toolLog.WithError(lastErr).Error("All tool attempts failed")
-			toolResponse = fmt.Sprintf(
-				"Tool error after %d attempts: %v",
-				retryCount,
-				lastErr,
-			)
-		}
+			toolResponseMsg = ai.Message{
+				Role:       ai.RoleTool,
+				ToolCallID: tool.ID,
+				Text:       toolResponse,
+			}
 
-		toolResponseMsg = ai.Message{
-			Role:       ai.RoleTool,
-			ToolCallID: tool.ID,
-			Text:       toolResponse,
-		}
+			_, err = c.saveMessage(NewToolConversationMessage(
+				assistantMessage,
+				toolResponse,
+				tool.Function.Name,
+				args,
+				[]ai.Message{toolResponseMsg},
+			))
+			if err != nil {
+				toolLog.WithFields(logger.Fields{
+					"tool_response": toolResponse,
+				}).Error("Error saving tool response to database. Skip tool")
+				resultChan <- toolResult{index: idx, err: err}
+				return
+			}
 
-		_, err = c.saveMessage(NewToolConversationMessage(
-			assistantMessage,
-			toolResponse,
-			tool.Function.Name,
-			args,
-			[]ai.Message{toolResponseMsg},
-		))
-		if err != nil {
-			toolLog.WithFields(logger.Fields{
-				"tool_response": toolResponse,
-			}).Error("Error saving tool response to database. Skip tool")
-			continue
-		}
+			resultChan <- toolResult{index: idx, response: toolResponseMsg}
+		}(i, tool)
+	}
 
-		response = append(response, toolResponseMsg)
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	results := make([]*toolResult, len(toolsList))
+	for result := range resultChan {
+		results[result.index] = &result
+	}
+
+	for _, result := range results {
+		if result != nil && result.err == nil {
+			response = append(response, result.response)
+		}
 	}
 
 	return response, nil
