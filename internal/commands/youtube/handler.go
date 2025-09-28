@@ -90,9 +90,9 @@ func (c *Command) Execute(update telegram.Update) error {
 	maxSizeStr := c.Cfg.YtDlp().MaxSize
 	if _, err := exec.LookPath("ffmpeg"); err == nil {
 		// good quality, small size
-		format = fmt.Sprintf("bv*[height<=1920][filesize<%s][ext=mp4]+ba[filesize<10M]", maxSizeStr)
+		format = fmt.Sprintf("bv*[vcodec!^=hev1][vcodec!^=av01][height<=1920][filesize<%s][ext=mp4]+ba[filesize<10M]/bv*[height<=1920][filesize<%s][ext=mp4]+ba[filesize<10M]", maxSizeStr, maxSizeStr)
 	} else {
-		format = fmt.Sprintf("best[height<=1920][filesize<%s][ext=mp4]", maxSizeStr)
+		format = fmt.Sprintf("best[vcodec!^=hev1][vcodec!^=av01][height<=1920][filesize<%s][ext=mp4]/best[height<=1920][filesize<%s][ext=mp4]", maxSizeStr, maxSizeStr)
 	}
 
 	dl := ytdlp.New().
