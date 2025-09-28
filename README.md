@@ -320,10 +320,12 @@ only_free_models = false
 type = "openai-compatible"
 name = "duckai"
 base_url = "http://duckai:8080/v1/"
-override_models = true # use only models defined in config
+override_models = false # if true then use only models defined in config else get models from api and merge
 [[ai.providers.models]]
-model = "gpt-4o-mini"
+model = "gpt-5-mini"
 is_free = true
+input_modalities = ["text"]
+output_modalities = ["text"]
 
 [[ai.providers]]
 type = "openai-compatible"
