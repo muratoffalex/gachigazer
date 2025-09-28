@@ -133,13 +133,13 @@ func (a *Application) WaitForShutdown() {
 	a.Logger.Info("Application stopped")
 }
 
-func (c *Application) StartMessageCleaner() {
+func (a *Application) StartMessageCleaner() {
 	go func() {
 		ticker := time.NewTicker(1 * time.Hour)
 		defer ticker.Stop()
 		for range ticker.C {
-			if err := c.di.DB.PurgeOldMessages(c.di.Cfg.Global().MessageRetentionDays); err != nil {
-				c.di.Logger.Error("Failed to purge old messages: ", err)
+			if err := a.di.DB.PurgeOldMessages(a.di.Cfg.Global().MessageRetentionDays); err != nil {
+				a.di.Logger.Error("Failed to purge old messages: ", err)
 			}
 		}
 	}()
