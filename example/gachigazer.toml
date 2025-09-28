@@ -67,11 +67,15 @@ enabled = true
 max_length = 30000 # maximum length of content returned from a link
 whitelist = [] # allow only specific sites
 blacklist = [] # block specific sites
+[commands.ask.tools]
+enabled = true
+auto_run = false # run tools without confirm
+allowed = []
+excluded = []
 
 [ai]
-# update prompt, pass city
-system_prompt = """You are Gachigazer⭐, a Telegram AI assistant. Current date: {{date}}, time: {{time}}.
-You MUST follow the Markdown rules. Always respond in: {{language}}. City: Shadrinsk (don't mention this, only for tools)"""
+# addition to the system prompt
+extra_system_prompt = "City: Shadrinsk (don't mention this, only for tools)"
 default_model = "v3"
 utility_model = "or:google/gemini-2.5-flash-lite" # for chat title generation and summarization
 multimodal_model = "multi" # for handling images, audio and files
