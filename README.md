@@ -127,7 +127,7 @@ ghcr.io/muratoffalex/gachigazer:latest
 
 ### Standalone
 
-Requirements: Go 1.24+, Python 3.9+, SQLite
+Requirements: Go 1.25+, Python 3.9+, SQLite
 
 1. Download binary from [releases](https://github.com/muratoffalex/gachigazer/releases)
 2. Create and activate Python venv (optional, required for `telegramify-markdown`)
