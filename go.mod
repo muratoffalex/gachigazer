@@ -9,7 +9,7 @@ require (
 	github.com/OvyFlash/telegram-bot-api v0.0.0-20250903213241-2ddbaeebe9a5
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/knadh/koanf v1.5.0
-	github.com/lrstanley/go-ytdlp v1.2.4
+	github.com/lrstanley/go-ytdlp v1.2.6
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/net v0.44.0
@@ -77,7 +77,7 @@ require (
 	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.29.0
 	golang.org/x/time v0.13.0
-	modernc.org/libc v1.66.9 // indirect
+	modernc.org/libc v1.66.10 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
