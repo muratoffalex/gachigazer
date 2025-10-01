@@ -7,11 +7,11 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 	"github.com/lrstanley/go-ytdlp"
@@ -24,8 +24,6 @@ import (
 )
 
 const CommandName = "youtube"
-
-var youtubeRegex = regexp.MustCompile(`^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$`)
 
 type Command struct {
 	*base.Command
@@ -330,8 +328,8 @@ func (c *Command) Execute(update telegram.Update) error {
 		metadata,
 		comments,
 	)
-	c.Logger.WithField("size", len(caption)).Debug("Caption size")
-	captionTooLarge := len(caption) > 1500
+	c.Logger.WithField("size", utf8.RuneCountInString(caption)).Debug("Caption size")
+	captionTooLarge := utf8.RuneCountInString(caption) > 1024
 
 	if fileSize == 0 && file.FileSize != nil {
 		fileSize = int64(*file.FileSize)
@@ -510,13 +508,6 @@ func cleanURL(rawURL string) (string, error) {
 	}
 	u.Fragment = ""
 	return u.String(), nil
-}
-
-func capitalizeFirst(s string) string {
-	if len(s) == 0 {
-		return s
-	}
-	return strings.ToUpper(s[:1]) + s[1:]
 }
 
 func parseSize(sizeStr string) (int64, error) {

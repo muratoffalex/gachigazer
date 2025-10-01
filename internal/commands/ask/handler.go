@@ -1857,8 +1857,8 @@ func (c *Command) handleURLs(currentContent *MessageContent, chatID int64, recur
 				state.MarkProcessed()
 			}
 			text := content.GetText()
-			if len(text) > 500 {
-				state.TrimmedContent = text[:500] +
+			if utf8.RuneCountInString(text) > 500 {
+				state.TrimmedContent = string([]rune(text)[:500]) +
 					fmt.Sprintf(
 						"... [%s]",
 						c.L("ask.response.truncated", nil),
@@ -1867,8 +1867,8 @@ func (c *Command) handleURLs(currentContent *MessageContent, chatID int64, recur
 				state.TrimmedContent = text
 			}
 			maxLength := c.cmdCfg.Fetcher.MaxLength
-			if maxLength != 0 && len(content.Content[0].Text) > maxLength {
-				content.Content[0].Text = content.Content[0].Text[:maxLength] + "...[truncated]"
+			if maxLength != 0 && utf8.RuneCountInString(content.Content[0].Text) > maxLength {
+				content.Content[0].Text = string([]rune(content.Content[0].Text)[:maxLength]) + "...[truncated]"
 			}
 			if strings.Contains(url, "t.me") || strings.Contains(url, "reddit.com") || strings.Contains(url, "habr") {
 				c.extractImageURLs(content.Content, currentContent)
@@ -2142,8 +2142,8 @@ func (c *Command) AskStream(
 			if time.Since(lastUpdate) > updateThreshold && fullResponse.Len() > 3 {
 				msgText := fullResponse.String() + "..."
 
-				if len(msgText) > 4000 {
-					msgText = msgText[:4000] + "... " + c.L(
+				if utf8.RuneCountInString(msgText) > 4000 {
+					msgText = string([]rune(msgText)[:4000]) + "... " + c.L(
 						"ask.telegramLengthRestriction",
 						nil,
 					)
@@ -2443,8 +2443,8 @@ Text:
 			c.Logger.WithError(err).Error("Generating conversation title failed")
 		}
 	} else {
-		if len(title) > 40 {
-			return title[40:] + "...", "initial"
+		if utf8.RuneCountInString(title) > 40 {
+			return string([]rune(title)[40:]) + "...", "initial"
 		} else {
 			return title, "initial"
 		}

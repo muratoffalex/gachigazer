@@ -3,6 +3,7 @@ package ask
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/muratoffalex/gachigazer/internal/markdown"
 	"github.com/muratoffalex/gachigazer/internal/service"
@@ -174,7 +175,7 @@ func (b *MessageBuilder) Build() string {
 	builtSections := b.buildAllSections()
 	final := b.buildWithSections(builtSections)
 
-	if len(final) <= telegramMaxLength {
+	if utf8.RuneCountInString(final) <= telegramMaxLength {
 		return final
 	}
 
@@ -197,15 +198,20 @@ func (b *MessageBuilder) Build() string {
 		otherContent := strings.Join(otherParts, "\n")
 		otherContent = cleanText(otherContent) + BotMessageMarker
 
-		availableSpace := telegramMaxLength - len(otherContent) - len(markdown.Escape(b.config.Separators[SectionContent])) - len(markdown.Escape(b.config.Separators[SectionContext])) - 2
-		if availableSpace > len(titleTelegramify+maxLengthReachedEscaped+"||") {
+		availableSpace := telegramMaxLength - utf8.RuneCountInString(otherContent+markdown.Escape(b.config.Separators[SectionContent])+markdown.Escape(b.config.Separators[SectionContext])) - 2
+		if availableSpace > utf8.RuneCountInString(titleTelegramify+maxLengthReachedEscaped+"||") {
 			// Trim reasoning to fit available space
-			maxReasoningLength := availableSpace - len(titleTelegramify) - len(maxLengthReachedEscaped) - len("||")
-			reasoningWithoutTitle := strings.TrimSpace(reasoning[len(titleTelegramify):])
+			maxReasoningLength := availableSpace - utf8.RuneCountInString(titleTelegramify+maxLengthReachedEscaped+"||")
+
+			reasoningRunes := []rune(reasoning)
+			titleRuneCount := utf8.RuneCountInString(titleTelegramify)
+
+			reasoningWithoutTitleRunes := reasoningRunes[titleRuneCount:]
+
 			trimmedReasoning := reasoning
 			if len(trimmedReasoning) > maxReasoningLength {
-				trimmedReasoning = reasoningWithoutTitle[:maxReasoningLength]
-				trimmedReasoning = titleTelegramify + trimmedReasoning + maxLengthReachedEscaped + "||"
+				trimmedReasoningWithoutTitle := string(reasoningWithoutTitleRunes[:maxReasoningLength])
+				trimmedReasoning = titleTelegramify + trimmedReasoningWithoutTitle + maxLengthReachedEscaped + "||"
 			}
 			builtSections[SectionReasoning] = trimmedReasoning
 			final = b.buildWithSections(builtSections)
@@ -215,7 +221,7 @@ func (b *MessageBuilder) Build() string {
 		}
 	}
 
-	if len(final) <= telegramMaxLength {
+	if utf8.RuneCountInString(final) <= telegramMaxLength {
 		return final
 	}
 
@@ -226,7 +232,7 @@ func (b *MessageBuilder) Build() string {
 
 	// Last resort - trim content
 	if content, exists := builtSections[SectionContent]; exists {
-		remainingLength := telegramMaxLength - len(final)
+		remainingLength := telegramMaxLength - utf8.RuneCountInString(final)
 		if remainingLength < 0 {
 			truncateAt := len(content) + remainingLength
 			telegramified, _ := b.tg.TelegramifyMarkdown(content[:truncateAt])

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/muratoffalex/gachigazer/internal/ai"
 	"github.com/muratoffalex/gachigazer/internal/app/di"
@@ -207,7 +208,7 @@ func (c *Command) Execute(update telegram.Update) error {
 				))
 				sentModelsCount++
 
-				if modelList.Len() > 3900 {
+				if utf8.RuneCountInString(modelList.String()) > 3900 {
 					modelList.WriteString("\n" + c.Tg.EscapeText(c.Localizer.Localize("telegram.tgOutputTruncatedWarning", nil)) + "\n")
 					break
 				}
