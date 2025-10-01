@@ -87,7 +87,7 @@ func (a *Application) registerCommands(ctx context.Context) {
 	}
 	if a.cfg.GetCommandConfig(youtube.CommandName).Enabled {
 		go func() {
-			initCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
+			initCtx, cancel := context.WithTimeout(ctx, 120*time.Second)
 			defer cancel()
 
 			cmd, err := youtube.New(initCtx, a.di)
