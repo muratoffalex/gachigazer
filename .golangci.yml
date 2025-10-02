@@ -24,7 +24,7 @@ linters-settings:
   misspell:
     locale: US
   goimports:
-    local-prefixes: github.com/muratoffalex/gachigazer_v2
+    local-prefixes: github.com/muratoffalex/gachigazer
   stylecheck:
     checks: ["all"]
   gocritic:
