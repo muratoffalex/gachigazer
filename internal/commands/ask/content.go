@@ -602,7 +602,8 @@ func extractMessageText(msg *telegram.MessageOriginal, isCurrentMessage bool) (s
 	if IsCommand(text) {
 		parts := strings.Fields(text)
 		if len(parts) > 0 && strings.HasPrefix(parts[0], "/") {
-			command = strings.TrimPrefix(parts[0], "/")
+			fullCmd := strings.TrimPrefix(parts[0], "/")
+			command = strings.Split(fullCmd, "@")[0]
 			text = strings.TrimSpace(strings.TrimPrefix(text, parts[0]))
 		}
 	}

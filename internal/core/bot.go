@@ -260,7 +260,7 @@ func (b *Bot) Start(ctx context.Context) error {
 
 			if commandText == "" && msg.Caption != "" {
 				commandText = msg.Caption
-				if strings.HasPrefix(commandText, "/") {
+				if isCommand(commandText) {
 					parts := strings.Fields(commandText)
 					cmdParts := strings.Split(strings.TrimPrefix(parts[0], "/"), "@")
 					if len(cmdParts) > 1 && !strings.EqualFold(cmdParts[1], b.tg.Self().UserName) {
