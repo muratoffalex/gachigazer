@@ -17,5 +17,8 @@ docker-build:
 	docker build --network host -t gg -f docker/Dockerfile .
 
 docker-run:
-	docker run --network host -v ./gachigazer.toml:/app/gachigazer.toml -v ./bot.db:/app/data/bot.db -v ~/.cache/go-ytdlp/:/root/.cache/go-ytdlp gg
+	docker run --rm --network host -v ./gachigazer.toml:/app/gachigazer.toml -v ./bot.db:/app/data/bot.db -v ~/.cache/go-ytdlp/:/root/.cache/go-ytdlp --name gg gg
+
+docker-sh:
+	docker exec -it gg sh
 
