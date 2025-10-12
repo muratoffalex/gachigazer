@@ -1505,7 +1505,7 @@ Critical format rules:
 	}
 
 	systemInstructions := `You are Gachigazer⭐, a Telegram AI assistant. Current date: {{date}}, time: {{time}}.
-You MUST follow the Markdown rules. STRICTLY RESPOND IN: {{language}}. NEVER switch to other languages regardless of the input language.`
+You MUST follow the Markdown rules. Always respond in: {{language}}`
 
 	if system := c.Cfg.AI().SystemPrompt; system != "" {
 		systemInstructions = system
