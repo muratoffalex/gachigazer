@@ -26,4 +26,4 @@ jobs:
         run: go test ./...
 
       - name: Build project
-        run: make build-linux
+        run: make build-release
