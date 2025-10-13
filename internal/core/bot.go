@@ -353,7 +353,8 @@ func (b *Bot) Start(ctx context.Context) error {
 			if b.cfg.Global().FixInstagramPreviews && instagram.ContainsInstagramURL(commandText) {
 				instaURL := instagram.ExtractInstagramURL(commandText)
 				if instaURL != "" {
-					modifiedURL := strings.Replace(instaURL, "www.instagram", "ddinstagram", 1)
+					// TODO: Move prefix to config
+					modifiedURL := strings.Replace(instaURL, "www.instagram", "kkinstagram", 1)
 					b.tg.SendWithRetry(telegram.NewMessage(msg.Chat.ID, modifiedURL, msg.MessageID), 0)
 				}
 			}
