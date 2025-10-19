@@ -153,6 +153,17 @@ docker compose run bot ./gachigazer
 docker run -v ~/.local/gachigazer:/app/data:rw -v ~/config.toml:/app/gachigazer.toml ghcr.io/muratoffalex/gachigazer:latest ./gachigazer
 ```
 
+## How tools work
+
+You can specify a dedicated model for running tools only (`ai.tools_model`) in the configuration. This is useful when your main model doesn't support tools, or you're using a free model with poor tool support. Here's how it works:
+
+Assume we have a context window of 10 messages. When tools are triggered, the system first sends a request to the tool-capable model containing the current query and the last question-answer pair. This ensures the bot has both the necessary context and the tool execution request while minimizing token usage.
+
+The tool model then returns a response with instructions on which tools to execute. After running all the tools, the system generates a new LLM request to your main model with the tool results included.
+
+> [!NOTE]
+> If the main model doesn't support tools, the tool results will be passed as part of the user message with a `[Tool NAME]` header. Otherwise, the results will be placed in the standard tools section. This ensures any model can see the full context and can be switched on the fly.
+
 ## Configuration
 
 <details>
