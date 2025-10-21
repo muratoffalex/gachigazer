@@ -41,6 +41,7 @@ max_size = "" # abort download if filesize is larger, e.g. 50k or 44.6M
 [commands.ask]
 enabled = true
 generate_title_with_ai = false # when creating a chat, generates a title for it, for saving chats in the future
+max_context_turns = 30 # number of question-answer pairs to keep in context
 [commands.ask.display]
 metadata = true # show metadata
 context = true # show context

@@ -1270,7 +1270,7 @@ func (c *Command) getConversationHistory(chatID int64, startMessageID int) ([]co
 
 	// Get the full conversation thread starting from the replied message
 	currentMessageID := startMessageID
-	for i := 0; i < maxContextTurns && currentMessageID != 0 && !visited[currentMessageID]; i++ {
+	for i := 0; i < c.cmdCfg.MaxContextTurns && currentMessageID != 0 && !visited[currentMessageID]; i++ {
 		visited[currentMessageID] = true
 		messages, err := c.getMessagesFromHistoryByID(chatID, currentMessageID)
 		if err != nil || len(messages) == 0 {

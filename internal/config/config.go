@@ -136,6 +136,7 @@ func Load() (*Config, error) {
 		"commands.model.queue.throttle.period":              5 * time.Second,
 		"commands.ask.enabled":                              true,
 		"commands.ask.generate_title_with_ai":               false,
+		"commands.ask.max_context_turns":                    30,
 		"commands.ask.fetcher.enabled":                      true,
 		"commands.ask.audio.enabled":                        true,
 		"commands.ask.audio.max_in_history":                 0,
@@ -221,6 +222,7 @@ func (c *Config) GetAskCommandConfig() *AskCommandConfig {
 	return &AskCommandConfig{
 		CommandConfig:       *c.GetCommandConfig("ask"),
 		GenerateTitleWithAI: c.k.Bool("commands.ask.generate_title_with_ai"),
+		MaxContextTurns:     c.k.Int("commands.ask.max_context_turns"),
 		Images: askImagesOptions{
 			Enabled:  c.k.Bool("commands.ask.images.enabled"),
 			Max:      c.k.Int("commands.ask.images.max"),

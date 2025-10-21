@@ -598,6 +598,7 @@ type commandConfig struct {
 
 type AskCommandConfig struct {
 	CommandConfig       commandConfig
+	MaxContextTurns     int               `koanf:"max_context_turns"`
 	GenerateTitleWithAI bool              `koanf:"generate_title_with_ai"`
 	Display             askDisplayOptions `koanf:"display"`
 	Fetcher             askFetcherOptions `koanf:"fetcher"`

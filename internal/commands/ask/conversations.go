@@ -9,8 +9,6 @@ import (
 	"github.com/muratoffalex/gachigazer/internal/database"
 )
 
-const maxContextTurns = 100
-
 type Role string
 
 func (r Role) IsUser() bool {
