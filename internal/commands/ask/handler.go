@@ -1262,16 +1262,23 @@ func (c *Command) saveMessage(
 
 func (c *Command) getConversationHistory(chatID int64, startMessageID int) ([]conversationMessage, error) {
 	history := []conversationMessage{}
-	visited := make(map[int]bool) // To prevent infinite loops in case of weird reply chains
+	visited := make(map[int]struct{}) // To prevent infinite loops in case of weird reply chains
 
 	if startMessageID == 0 {
 		return history, nil
 	}
 
+	// count context turns without current
+	maxContextTurns := c.cmdCfg.MaxContextTurns - 1
+
 	// Get the full conversation thread starting from the replied message
 	currentMessageID := startMessageID
-	for i := 0; i < c.cmdCfg.MaxContextTurns && currentMessageID != 0 && !visited[currentMessageID]; i++ {
-		visited[currentMessageID] = true
+	uniqueChains := make(map[string]struct{}, maxContextTurns)
+	for len(uniqueChains) < maxContextTurns && currentMessageID != 0 {
+		if _, exists := visited[currentMessageID]; exists {
+			break
+		}
+		visited[currentMessageID] = struct{}{}
 		messages, err := c.getMessagesFromHistoryByID(chatID, currentMessageID)
 		if err != nil || len(messages) == 0 {
 			if err == sql.ErrNoRows {
@@ -1281,6 +1288,9 @@ func (c *Command) getConversationHistory(chatID int64, startMessageID int) ([]co
 		}
 
 		history = append(history, messages...)
+		for _, msg := range messages {
+			uniqueChains[msg.ConversationChainID] = struct{}{}
+		}
 
 		// Move to the message this one replied to
 		lastMessage := messages[len(messages)-1]
