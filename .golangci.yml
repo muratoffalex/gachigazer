@@ -1,53 +1,40 @@
+version: "2"
+
 linters:
   enable:
     - errcheck
-    - gosimple
     - govet
     - ineffassign
     - staticcheck
-    - typecheck
     - unused
-    - gofmt
-    - goimports
     - misspell
     - nilerr
     - prealloc
     - unconvert
     - unparam
     - whitespace
-    - stylecheck
     - gocritic
+    - revive
+    - errorlint
+    - gocyclo
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - gomnd
+          - dupl
 
-linters-settings:
-  govet:
-    shadow: true
-  misspell:
-    locale: US
-  goimports:
-    local-prefixes: github.com/muratoffalex/gachigazer
-  stylecheck:
-    checks: ["all"]
-  gocritic:
-    enabled-tags:
-      - performance
-      - style
-      - experimental
-
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - gomnd
-        - dupl
-  exclude-dirs:
-    - vendor/
-    - third_party/
+formatters:
+  enable:
+    - gofmt
+    - goimports
 
 run:
-  deadline: 5m
+  timeout: 5m
   tests: true
 
 output:
-  formats: colored-line-number
-  print-issued-lines: true
-  print-linter-name: true
+  formats:
+    text:
+      print-issued-lines: true
+      print-linter-name: true
