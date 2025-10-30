@@ -14,8 +14,8 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/muratoffalex/gachigazer/internal/logger"
+	"github.com/muratoffalex/gachigazer/internal/network"
 	"github.com/muratoffalex/gachigazer/internal/telegram"
-	"github.com/muratoffalex/gachigazer/internal/utils"
 	"golang.org/x/net/html/charset"
 )
 
@@ -53,18 +53,13 @@ func GetFetcher() *Fetcher {
 }
 
 func NewFetcher(proxy string, logger logger.Logger) *Fetcher {
-	dialerContext, _ := utils.CreateProxyDialer(proxy, logger)
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			DialContext:         dialerContext,
-			DisableKeepAlives:   true,
-			ForceAttemptHTTP2:   true,
-			MaxIdleConns:        10,
-			IdleConnTimeout:     30 * time.Second,
-			TLSHandshakeTimeout: 10 * time.Second,
-		},
-		Timeout: 30 * time.Second,
-	}
+	httpConfig := network.NewDefaultHTTPClientConfig(proxy)
+	httpConfig.DisableKeepAlives = true
+	httpConfig.MaxIdleConns = 10
+	httpConfig.IdleConnTimeout = 10 * time.Second
+	httpConfig.Timeout = 30 * time.Second
+	httpClient := network.SetupHTTPClient(httpConfig, logger)
+
 	instance = &Fetcher{
 		client: httpClient,
 		logger: logger,

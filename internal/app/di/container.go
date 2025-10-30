@@ -15,10 +15,10 @@ import (
 	"github.com/muratoffalex/gachigazer/internal/fetch"
 	"github.com/muratoffalex/gachigazer/internal/logger"
 	"github.com/muratoffalex/gachigazer/internal/markdown"
+	"github.com/muratoffalex/gachigazer/internal/network"
 	"github.com/muratoffalex/gachigazer/internal/queue"
 	"github.com/muratoffalex/gachigazer/internal/service"
 	"github.com/muratoffalex/gachigazer/internal/telegram"
-	"github.com/muratoffalex/gachigazer/internal/utils"
 )
 
 type Container struct {
@@ -65,7 +65,8 @@ func NewContainer(cfg *config.Config) (*Container, error) {
 		Localizer: localizer,
 	}
 
-	container.HttpClient = utils.SetupHTTPClient(cfg.HTTP().GetProxy(), l)
+	httpCfg := network.NewDefaultHTTPClientConfig(cfg.HTTP().GetProxy())
+	container.HttpClient = network.SetupHTTPClient(httpCfg, l)
 	container.Fetcher = fetch.NewFetcher(cfg.HTTP().GetProxy(), l)
 
 	providerRegistry := ai.NewProviderRegistry(cfg, l)
