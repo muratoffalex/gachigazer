@@ -482,7 +482,7 @@ func (f *Fetcher) parseBoosty(doc *goquery.Document) Response {
 
 func (f *Fetcher) parseHabr(doc *goquery.Document, url string) Response {
 	title := doc.Find("h1.tm-title").First().Text()
-	body := doc.Find("div.tm-article-body").First()
+	body := doc.Find("div.article-body").First()
 	text := f.cleanText(body.Text())
 	var images string
 	body.Find("img").Each(func(i int, s *goquery.Selection) {
@@ -492,7 +492,7 @@ func (f *Fetcher) parseHabr(doc *goquery.Document, url string) Response {
 			}
 		}
 	})
-	rating := doc.Find("div.tm-votes-meter title").First().Text()
+	rating := doc.Find("span[data-test-id='votes-score-counter']").First().Text()
 	date := doc.Find(".tm-article-datetime-published time").First().Text()
 	comments := f.parseHabrComments(url)
 
