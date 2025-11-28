@@ -7,7 +7,7 @@ toolchain go1.25.1
 require (
 	github.com/Davincible/goinsta/v3 v3.2.6
 	github.com/OvyFlash/telegram-bot-api v0.0.0-20250903213241-2ddbaeebe9a5
-	github.com/PuerkitoBio/goquery v1.10.3
+	github.com/PuerkitoBio/goquery v1.11.0
 	github.com/knadh/koanf v1.5.0
 	github.com/lrstanley/go-ytdlp v1.2.7
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
