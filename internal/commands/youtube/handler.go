@@ -64,6 +64,8 @@ func (c *Command) Execute(update telegram.Update) error {
 			}
 		}
 	}
+	c.Logger.WithField("urls", urls).Info("Found urls")
+
 	chatID := update.Message.Chat.ID
 	messageID := update.Message.MessageID
 	url := ""
