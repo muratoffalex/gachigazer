@@ -84,18 +84,7 @@ func (c *Command) Execute(update telegram.Update) error {
 		tempDirectory = os.TempDir() + "/"
 	}
 
-	var format string
-	maxSizeStr := c.Cfg.YtDlp().MaxSize
-	if _, err := exec.LookPath("ffmpeg"); err == nil {
-		// good quality, small size
-		format = fmt.Sprintf("bv*[vcodec!^=hev1][vcodec!^=av01][height<=1920][filesize<%s][ext=mp4]+ba[filesize<10M]/bv*[height<=1920][filesize<%s][ext=mp4]+ba[filesize<10M]", maxSizeStr, maxSizeStr)
-	} else {
-		format = fmt.Sprintf("best[vcodec!^=hev1][vcodec!^=av01][height<=1920][filesize<%s][ext=mp4]/best[height<=1920][filesize<%s][ext=mp4]", maxSizeStr, maxSizeStr)
-	}
-
 	dl := ytdlp.New().
-		Format(format).
-		FormatSort("ext:mp4,res").
 		Output("%(id)s.%(ext)s").
 		SetWorkDir(tempDirectory).
 		MaxFileSize(c.Cfg.YtDlp().MaxSize).
@@ -103,6 +92,18 @@ func (c *Command) Execute(update telegram.Update) error {
 		PrintJSON().
 		WriteComments()
 		// SkipDownload() // interesting option, so I can download all data separately, check the file size, and then download only it
+
+	if isYouTubeURL(url) {
+		var format string
+		maxSizeStr := c.Cfg.YtDlp().MaxSize
+		if _, err := exec.LookPath("ffmpeg"); err == nil {
+			// good quality, small size
+			format = fmt.Sprintf("bv*[vcodec!^=hev1][vcodec!^=av01][height<=1920][filesize<%s][ext=mp4]+ba[filesize<10M]/bv*[height<=1920][filesize<%s][ext=mp4]+ba[filesize<10M]", maxSizeStr, maxSizeStr)
+		} else {
+			format = fmt.Sprintf("best[vcodec!^=hev1][vcodec!^=av01][height<=1920][filesize<%s][ext=mp4]/best[height<=1920][filesize<%s][ext=mp4]", maxSizeStr, maxSizeStr)
+		}
+		dl.Format(format).FormatSort("ext:mp4,res")
+	}
 
 	if proxy := c.Cfg.HTTP().GetProxy(); proxy != "" {
 		dl.Proxy(proxy)
@@ -535,4 +536,16 @@ func parseSize(sizeStr string) (int64, error) {
 	}
 
 	return int64(size * multiplier), nil
+}
+
+func isYouTubeURL(rawURL string) bool {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+
+	hostname := strings.ToLower(u.Hostname())
+	return strings.Contains(hostname, "youtube.com") ||
+		strings.Contains(hostname, "youtu.be") ||
+		strings.Contains(hostname, "youtube-nocookie.com")
 }
