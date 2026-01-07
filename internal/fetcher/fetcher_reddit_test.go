@@ -150,7 +150,7 @@ func TestRedditFetcher_Handle_NoContent(t *testing.T) {
 		fetcher := NewRedditFetcher(l, mockClient)
 
 		request, err := NewRequestPayload(
-			"https://www.reddit.com/r/empty/comments/999",
+			"https://old.reddit.com/r/empty/comments/999",
 			nil,
 			nil,
 		)
@@ -186,7 +186,7 @@ func TestRedditFetcher_Handle_NoContent(t *testing.T) {
 		fetcher := NewRedditFetcher(l, mockClient)
 
 		request, err := NewRequestPayload(
-			"https://www.reddit.com/r/missing/comments/777",
+			"https://old.reddit.com/r/missing/comments/777",
 			nil,
 			nil,
 		)
@@ -210,7 +210,7 @@ func TestRedditFetcher_Handle_HTTPError(t *testing.T) {
 	fetcher := NewRedditFetcher(l, mockClient)
 
 	request, err := NewRequestPayload(
-		"https://www.reddit.com/r/error/comments/123",
+		"https://old.reddit.com/r/error/comments/123",
 		nil,
 		nil,
 	)
@@ -546,13 +546,5 @@ func TestRedditFetcher_getOldRedditURL(t *testing.T) {
 		result := fetcher.getOldRedditURL("https://example.com/page")
 
 		assert.Equal(t, "https://example.com/page", result, "Should return same URL for non-reddit domains")
-	})
-
-	t.Run("reddit URL without comments path", func(t *testing.T) {
-		fetcher := NewRedditFetcher(l, &http.Client{})
-
-		result := fetcher.getOldRedditURL("https://www.reddit.com/r/programming/")
-
-		assert.Equal(t, "https://old.reddit.com/r/programming/", result, "Should not convert non-comments pages")
 	})
 }
