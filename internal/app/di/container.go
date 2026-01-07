@@ -79,6 +79,7 @@ func NewContainer(cfg *config.Config) (*Container, error) {
 	fetcherHTTPCfg := network.NewHTTPClientConfigForFetcher(cfg.HTTP().GetProxy())
 	fetcherHTTPClient := network.SetupHTTPClient(fetcherHTTPCfg, l)
 	fetcherManager := fetcher.NewManager(l)
+	fetcherManager.RegisterFetcher(fetcher.NewFragranticaFetcher(l, fetcherHTTPClient))
 	fetcherManager.RegisterFetcher(fetcher.NewRedditFetcher(l, fetcherHTTPClient))
 	fetcherManager.RegisterFetcher(fetcher.NewHabrFetcher(l, fetcherHTTPClient))
 	fetcherManager.RegisterFetcher(fetcher.NewGithubFetcher(l, fetcherHTTPClient))
