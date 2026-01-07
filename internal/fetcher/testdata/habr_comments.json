@@ -1,0 +1,208 @@
+{
+  "comments": {
+    "29346598": {
+      "id": "29346598",
+      "parentId": null,
+      "level": 0,
+      "timePublished": "2026-01-06T12:44:42+00:00",
+      "timeChanged": null,
+      "isSuspended": false,
+      "status": "published",
+      "score": 2,
+      "votesCount": 2,
+      "message": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><blockquote><p>Новая цель - сверхразум: Система, которая справляется с ролью генерального директора крупной корпорации</p></blockquote><p>А что, в корпорациях на должность генерального выбирают самого умного?</p><p><span class=\"habrahidden\">А ещё этот абзац в тексте задвоился</span></p></div>",
+      "editorVersion": 2,
+      "author": {
+        "id": "722615",
+        "alias": "gun_dose",
+        "fullname": null,
+        "avatarUrl": null,
+        "speciality": null
+      },
+      "isAuthor": false,
+      "isPostAuthor": false,
+      "isNew": false,
+      "isFavorite": false,
+      "isCanEdit": false,
+      "timeEditAllowedTill": null,
+      "children": [
+        "29346670"
+      ],
+      "vote": {
+        "value": null,
+        "isCanVote": false
+      },
+      "votePlus": null,
+      "voteMinus": null,
+      "isPinned": false,
+      "isPublicationAuthor": false
+    },
+    "29346670": {
+      "id": "29346670",
+      "parentId": "29346598",
+      "level": 1,
+      "timePublished": "2026-01-06T12:55:24+00:00",
+      "timeChanged": null,
+      "isSuspended": false,
+      "status": "published",
+      "score": 0,
+      "votesCount": 0,
+      "message": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><strong>Владелец компании</strong> желает получить самого умного на должность генерального  директора крупной корпорации. Надо быть <strong>умным владельцем</strong>!   </p></div>",
+      "editorVersion": 2,
+      "author": {
+        "id": "5319487",
+        "alias": "vital_peresvet",
+        "fullname": "Vital",
+        "avatarUrl": "//habrastorage.org/getpro/habr/avatars/7b0/292/fdf/7b0292fdf5bf50184b79784e4e76fa3f.png",
+        "speciality": "Тестировщик ИИ"
+      },
+      "isAuthor": false,
+      "isPostAuthor": true,
+      "isNew": false,
+      "isFavorite": false,
+      "isCanEdit": false,
+      "timeEditAllowedTill": null,
+      "children": [],
+      "vote": {
+        "value": null,
+        "isCanVote": false
+      },
+      "votePlus": null,
+      "voteMinus": null,
+      "isPinned": false,
+      "isPublicationAuthor": true
+    },
+    "29346846": {
+      "id": "29346846",
+      "parentId": null,
+      "level": 0,
+      "timePublished": "2026-01-06T13:33:51+00:00",
+      "timeChanged": "2026-01-06T13:34:04+00:00",
+      "isSuspended": false,
+      "status": "published",
+      "score": 1,
+      "votesCount": 1,
+      "message": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Че-то вспомнилось - не рой яму другому, сам в нее попадешь /s</p></div>",
+      "editorVersion": 2,
+      "author": {
+        "id": "879745",
+        "alias": "onets",
+        "fullname": null,
+        "avatarUrl": "//habrastorage.org/getpro/habr/avatars/0bc/c02/d41/0bcc02d410dffbc934d8af22c05d3f75.png",
+        "speciality": "Architect | Lead | Senior Developer"
+      },
+      "isAuthor": false,
+      "isPostAuthor": false,
+      "isNew": false,
+      "isFavorite": false,
+      "isCanEdit": false,
+      "timeEditAllowedTill": null,
+      "children": [],
+      "vote": {
+        "value": null,
+        "isCanVote": false
+      },
+      "votePlus": null,
+      "voteMinus": null,
+      "isPinned": false,
+      "isPublicationAuthor": false
+    },
+    "29346944": {
+      "id": "29346944",
+      "parentId": null,
+      "level": 0,
+      "timePublished": "2026-01-06T13:56:49+00:00",
+      "timeChanged": null,
+      "isSuspended": false,
+      "status": "published",
+      "score": 0,
+      "votesCount": 0,
+      "message": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><blockquote><p>Новая цель - сверхразум: Система, которая справляется с ролью  генерального директора крупной корпорации или главы научной лаборатории  лучше любого человека.</p></blockquote><p>И срок за человека отсидит?</p></div>",
+      "editorVersion": 2,
+      "author": {
+        "id": "3996922",
+        "alias": "LinkToOS",
+        "fullname": null,
+        "avatarUrl": null,
+        "speciality": null
+      },
+      "isAuthor": false,
+      "isPostAuthor": false,
+      "isNew": false,
+      "isFavorite": false,
+      "isCanEdit": false,
+      "timeEditAllowedTill": null,
+      "children": [
+        "29346966"
+      ],
+      "vote": {
+        "value": null,
+        "isCanVote": false
+      },
+      "votePlus": null,
+      "voteMinus": null,
+      "isPinned": false,
+      "isPublicationAuthor": false
+    },
+    "29346966": {
+      "id": "29346966",
+      "parentId": "29346944",
+      "level": 1,
+      "timePublished": "2026-01-06T13:59:57+00:00",
+      "timeChanged": null,
+      "isSuspended": false,
+      "status": "published",
+      "score": 0,
+      "votesCount": 0,
+      "message": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><blockquote><p>И срок за человека отсидит?  </p></blockquote><p>Срок существует не просто так, а чтобы этот(и другие) товарищи так (больше) не делали.  Электронной системе мозги можно вправлять по другому.</p></div>",
+      "editorVersion": 2,
+      "author": {
+        "id": "872872",
+        "alias": "inkelyad",
+        "fullname": null,
+        "avatarUrl": null,
+        "speciality": "Java программист"
+      },
+      "isAuthor": false,
+      "isPostAuthor": false,
+      "isNew": false,
+      "isFavorite": false,
+      "isCanEdit": false,
+      "timeEditAllowedTill": null,
+      "children": [],
+      "vote": {
+        "value": null,
+        "isCanVote": false
+      },
+      "votePlus": null,
+      "voteMinus": null,
+      "isPinned": false,
+      "isPublicationAuthor": false
+    },
+    "126": {
+      "id": "126",
+      "parentId": null,
+      "level": 0,
+      "author": {
+        "alias": "spammer"
+      },
+      "message": "UFO just landed and posted this here",
+      "score": 0
+    }
+  },
+  "moderated": {},
+  "threads": [
+    "29346598",
+    "29346846",
+    "29346944"
+  ],
+  "commentAccess": {
+    "isCanComment": false,
+    "cantCommentReasonKey": "AUTH_REQUIRED",
+    "cantCommentReason": "Authorization required",
+    "data": null
+  },
+  "lastCommentTimestamp": 1767707997,
+  "pinnedCommentIds": [],
+  "cacheKey": "03d442dd-5fab-41a7-8157-78d1a4700ba0"
+}

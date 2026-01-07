@@ -24,7 +24,7 @@ import (
 	"github.com/muratoffalex/gachigazer/internal/commands/base"
 	"github.com/muratoffalex/gachigazer/internal/config"
 	"github.com/muratoffalex/gachigazer/internal/database"
-	"github.com/muratoffalex/gachigazer/internal/fetch"
+	fetch "github.com/muratoffalex/gachigazer/internal/fetcher"
 	"github.com/muratoffalex/gachigazer/internal/logger"
 	"github.com/muratoffalex/gachigazer/internal/markdown"
 	"github.com/muratoffalex/gachigazer/internal/service"
@@ -53,11 +53,12 @@ type Command struct {
 	ai            *ai.ProviderRegistry
 	db            database.Database
 	supportedArgs []Argument
-	fetcher       *fetch.Fetcher
+	fetcher       *fetch.Manager
 	httpClient    *http.Client
 	retryCount    int
 	args          *CommandArgs
 	cmdCfg        *config.AskCommandConfig
+	toolsRunner   *tools.Tools
 }
 
 func (c *Command) Name() string {
@@ -75,10 +76,12 @@ func New(di *di.Container) *Command {
 	promptAliases = append(promptAliases, "help")
 	toolsCfg := di.Cfg.GetAskCommandConfig().Tools
 	availableTools := strings.Join(tools.ToolNames(toolsCfg.Allowed, toolsCfg.Excluded), ", ")
+	toolsRunner := tools.NewTools(di.HttpClient, di.Fetcher, di.YtService, di.Logger)
 	cmd := &Command{
-		fetcher:    di.Fetcher,
-		httpClient: di.HttpClient,
-		cmdCfg:     di.Cfg.GetAskCommandConfig(),
+		fetcher:     di.Fetcher,
+		httpClient:  di.HttpClient,
+		cmdCfg:      di.Cfg.GetAskCommandConfig(),
+		toolsRunner: toolsRunner,
 		supportedArgs: []Argument{
 			{
 				Name:        "m",
@@ -252,7 +255,7 @@ func (c *Command) Execute(update telegram.Update) error {
 			editedMessage = callback.Message.MessageID
 			historyMessage, err = c.getMessageFromHistory(msg.Chat.ID, int64(msg.MessageID))
 			if err != nil {
-				if err == sql.ErrNoRows {
+				if errors.Is(err, sql.ErrNoRows) {
 					c.Logger.Debug("Message in conversation history not found")
 				}
 				attempt = 1
@@ -422,7 +425,7 @@ func (c *Command) Execute(update telegram.Update) error {
 	}
 
 	latestMessage, err = c.getMessageFromHistory(chatID, historyStartMessageID)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	} else {
 		if latestMessage != nil {
@@ -439,7 +442,7 @@ func (c *Command) Execute(update telegram.Update) error {
 			"chat_id":    chatID,
 			"message_id": historyStartMessageID,
 		}).Info("Fetching conversation history")
-		conversationHistory, err = c.getConversationHistory(chatID, int(latestMessage.MessageID))
+		conversationHistory, err = c.getConversationHistory(chatID, latestMessage.MessageID)
 		if err != nil {
 			// Log error but continue processing, maybe with just the current message
 			c.Logger.WithError(err).Error("Failed to retrieve conversation history")
@@ -835,7 +838,7 @@ func (c *Command) Execute(update telegram.Update) error {
 		currentContent,
 		model,
 		params,
-		int(botMessageID),
+		botMessageID,
 		messageID,
 		response,
 		toolFromCallback,
@@ -1015,7 +1018,6 @@ func (c *Command) Execute(update telegram.Update) error {
 		replyMarkup = &telegram.InlineKeyboardMarkup{
 			InlineKeyboard: buttonRows,
 		}
-
 	}
 
 	finalMessageEscaped := builder.Build()
@@ -1093,10 +1095,10 @@ func (c *Command) updateConversationSummary(summary string, chatID, conversation
 	return err
 }
 
-func (c *Command) updateConversationMessageAttempts(ID int64, attempts uint8) error {
+func (c *Command) updateConversationMessageAttempts(id int64, attempts uint8) error {
 	query := `UPDATE conversation_history set attempts_count = ? where id = ?`
 
-	_, err := c.db.Exec(query, attempts, ID)
+	_, err := c.db.Exec(query, attempts, id)
 	return err
 }
 
@@ -1281,7 +1283,7 @@ func (c *Command) getConversationHistory(chatID int64, startMessageID int) ([]co
 		visited[currentMessageID] = struct{}{}
 		messages, err := c.getMessagesFromHistoryByID(chatID, currentMessageID)
 		if err != nil || len(messages) == 0 {
-			if err == sql.ErrNoRows {
+			if errors.Is(err, sql.ErrNoRows) {
 				break
 			}
 			return nil, err
@@ -1755,8 +1757,8 @@ func (c *Command) generateArgumentsHelpText() string {
 	help.WriteString("📚 *Available arguments:*\n\n")
 
 	for _, arg := range c.supportedArgs {
-		help.WriteString(fmt.Sprintf("➤ *$%s:* %s\n", markdown.Escape(arg.Name), markdown.Escape(arg.Description)))
-		help.WriteString(fmt.Sprintf("  └ Type: `%s`\n", arg.Type))
+		fmt.Fprintf(&help, "➤ *$%s:* %s\n", markdown.Escape(arg.Name), markdown.Escape(arg.Description))
+		fmt.Fprintf(&help, "  └ Type: `%s`\n", arg.Type)
 
 		if arg.Type == "int" || arg.Type == "float" {
 			var constraints []string
@@ -1767,7 +1769,7 @@ func (c *Command) generateArgumentsHelpText() string {
 				constraints = append(constraints, markdown.Escape(fmt.Sprintf("max: %.1f", *arg.Max)))
 			}
 			if len(constraints) > 0 {
-				help.WriteString(fmt.Sprintf("  └ Restrictions: %s\n", strings.Join(constraints, ", ")))
+				fmt.Fprintf(&help, "  └ Restrictions: %s\n", strings.Join(constraints, ", "))
 			}
 		}
 
@@ -1776,11 +1778,11 @@ func (c *Command) generateArgumentsHelpText() string {
 			for _, v := range arg.Values {
 				vals = append(vals, markdown.Escape(v))
 			}
-			help.WriteString(fmt.Sprintf("  └ Valid values: %s\n", strings.Join(vals, ", ")))
+			fmt.Fprintf(&help, "  └ Valid values: %s\n", strings.Join(vals, ", "))
 		}
 
 		if arg.DefaultValue != "" {
-			help.WriteString(fmt.Sprintf("  └ By default: `%s`\n", markdown.Escape(arg.DefaultValue)))
+			fmt.Fprintf(&help, "  └ By default: `%s`\n", markdown.Escape(arg.DefaultValue))
 		}
 	}
 
@@ -1850,7 +1852,7 @@ func (c *Command) handleURLs(currentContent *MessageContent, chatID int64, recur
 				"chat_id": chatID,
 				"url":     url,
 			}).Debug("Fetching URL content")
-			content := c.fetcher.Txt(fetch.RequestPayload{URL: url})
+			content, _ := c.fetcher.Fetch(fetch.MustNewRequestPayload(url, nil, nil))
 
 			mu.Lock()
 			defer mu.Unlock()
@@ -1951,7 +1953,7 @@ func (c *Command) extractImageURLs(content []fetch.Content, currentContent *Mess
 func getChatID(msg *telegram.MessageOriginal) int64 {
 	if msg.Chat.IsSuperGroup() {
 		chatID := -msg.Chat.ID
-		chatID = chatID % 10000000000
+		chatID %= 10000000000
 		return chatID
 	}
 	return msg.Chat.ID
@@ -2755,9 +2757,8 @@ func (c *Command) handleTools(ctx context.Context, toolsList []ai.ToolCall, assi
 }
 
 func (c *Command) runSingleTool(ctx context.Context, tool ai.ToolCall, args map[string]any, assistantMessage *conversationMessage, toolLog logger.Logger) (string, error) {
-	toolInstance := tools.NewTools(c.httpClient, c.fetcher, c.Logger)
 	toolName := capitalizeFirst(tool.Function.Name)
-	method := reflect.ValueOf(toolInstance).MethodByName(toolName)
+	method := reflect.ValueOf(c.toolsRunner).MethodByName(toolName)
 	if !method.IsValid() {
 		return "", fmt.Errorf("tool method %s not found", toolName)
 	}

@@ -8,8 +8,9 @@ import (
 	"strings"
 
 	"github.com/muratoffalex/gachigazer/internal/ai"
-	"github.com/muratoffalex/gachigazer/internal/fetch"
+	"github.com/muratoffalex/gachigazer/internal/fetcher"
 	"github.com/muratoffalex/gachigazer/internal/logger"
+	"github.com/muratoffalex/gachigazer/internal/service/youtube"
 )
 
 const (
@@ -23,18 +24,25 @@ const (
 	ToolFetchYtComments     = "fetch_yt_comments"
 )
 
-func NewTools(httpClient *http.Client, fetcher *fetch.Fetcher, logger logger.Logger) *Tools {
+func NewTools(
+	httpClient *http.Client,
+	fetcher *fetcher.Manager,
+	ytService *youtube.Service,
+	logger logger.Logger,
+) *Tools {
 	return &Tools{
 		httpClient: httpClient,
 		fetcher:    fetcher,
 		logger:     logger,
+		ytService:  ytService,
 	}
 }
 
 type Tools struct {
 	httpClient *http.Client
-	fetcher    *fetch.Fetcher
+	fetcher    *fetcher.Manager
 	logger     logger.Logger
+	ytService  *youtube.Service
 }
 
 func ToolNames(allowedTools []string, excludedTools []string) []string {

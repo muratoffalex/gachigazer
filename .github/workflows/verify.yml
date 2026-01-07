@@ -1,11 +1,11 @@
-name: Verify Build
+name: Verify
 
 on:
   pull_request:
     branches: [main]
 
 concurrency:
-  group: verify-build-${{ github.ref }}
+  group: verify-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -19,11 +19,14 @@ jobs:
         with:
           go-version: "stable"
 
+      - name: Install mockery
+        run: go install github.com/vektra/mockery/v3@v3.6.1
+
       - name: Install dependencies
         run: go mod download
 
       - name: Run tests
-        run: go test ./...
+        run: make test-ci
 
       - name: Build project
         run: make build-release

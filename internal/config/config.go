@@ -122,6 +122,7 @@ func Load() (*Config, error) {
 		"commands.r.queue.enabled":                          true,
 		"commands.r.queue.max_retries":                      3,
 		"commands.r.queue.retry_limit":                      5 * time.Second,
+		"commands.r.queue.throttle.requests":                3,
 		"commands.r.queue.throttle.period":                  10 * time.Second,
 		"commands.youtube.enabled":                          true,
 		"commands.youtube.queue.enabled":                    true,

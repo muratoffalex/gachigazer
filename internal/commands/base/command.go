@@ -6,7 +6,7 @@ import (
 	"github.com/muratoffalex/gachigazer/internal/app/di"
 	"github.com/muratoffalex/gachigazer/internal/commands"
 	"github.com/muratoffalex/gachigazer/internal/config"
-	"github.com/muratoffalex/gachigazer/internal/fetch"
+	"github.com/muratoffalex/gachigazer/internal/fetcher"
 	"github.com/muratoffalex/gachigazer/internal/logger"
 	"github.com/muratoffalex/gachigazer/internal/queue"
 	"github.com/muratoffalex/gachigazer/internal/service"
@@ -91,7 +91,7 @@ func (c *Command) ExtractURLsFromEntities(text string, entities []telegram.Messa
 			if entity.Type == "text_link" && entity.URL != "" {
 				url = entity.URL
 			}
-			if fetch.IsURL(url) {
+			if fetcher.IsURL(url) {
 				urls = append(urls, url)
 			}
 		}

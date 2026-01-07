@@ -17,7 +17,7 @@ import (
 	"github.com/lrstanley/go-ytdlp"
 	"github.com/muratoffalex/gachigazer/internal/app/di"
 	"github.com/muratoffalex/gachigazer/internal/commands/base"
-	"github.com/muratoffalex/gachigazer/internal/fetch"
+	"github.com/muratoffalex/gachigazer/internal/fetcher"
 	"github.com/muratoffalex/gachigazer/internal/logger"
 	"github.com/muratoffalex/gachigazer/internal/markdown"
 	"github.com/muratoffalex/gachigazer/internal/telegram"
@@ -257,7 +257,7 @@ func (c *Command) Execute(update telegram.Update) error {
 			if comment.LikeCount != nil {
 				commentInfo = append(
 					commentInfo,
-					fmt.Sprintf("👍🏻 *_%s_*", c.Tg.EscapeText(fetch.FormatCount(*comment.LikeCount))),
+					fmt.Sprintf("👍🏻 *_%s_*", c.Tg.EscapeText(fetcher.FormatCount(*comment.LikeCount))),
 				)
 			}
 
@@ -302,17 +302,17 @@ func (c *Command) Execute(update telegram.Update) error {
 
 	var metadataArray []string
 	if file.LikeCount != nil {
-		likeInfo := fmt.Sprintf("👍🏻 *%s*", c.Tg.EscapeText(fetch.FormatCount(*file.LikeCount)))
+		likeInfo := fmt.Sprintf("👍🏻 *%s*", c.Tg.EscapeText(fetcher.FormatCount(*file.LikeCount)))
 		metadataArray = append(metadataArray, likeInfo)
 	}
 
 	if file.ViewCount != nil {
-		viewInfo := fmt.Sprintf("👁 *%s*", c.Tg.EscapeText(fetch.FormatCount(*file.ViewCount)))
+		viewInfo := fmt.Sprintf("👁 *%s*", c.Tg.EscapeText(fetcher.FormatCount(*file.ViewCount)))
 		metadataArray = append(metadataArray, viewInfo)
 	}
 
 	if file.CommentCount != nil {
-		commentInfo := fmt.Sprintf("💬 *%s*", c.Tg.EscapeText(fetch.FormatCount(*file.CommentCount)))
+		commentInfo := fmt.Sprintf("💬 *%s*", c.Tg.EscapeText(fetcher.FormatCount(*file.CommentCount)))
 		metadataArray = append(metadataArray, commentInfo)
 	}
 
@@ -341,7 +341,7 @@ func (c *Command) Execute(update telegram.Update) error {
 	fileInfo, err := os.Stat(filePath)
 	if err == nil {
 		if fileSize == 0 {
-			fileSize = int64(fileInfo.Size())
+			fileSize = fileInfo.Size()
 		}
 	} else {
 		c.Logger.WithField("error", output.Stderr).Debug("File not downloaded")

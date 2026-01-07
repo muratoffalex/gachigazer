@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/muratoffalex/gachigazer/internal/fetch"
+	"github.com/muratoffalex/gachigazer/internal/fetcher"
 )
 
 type CurrencyService struct {
@@ -62,7 +62,7 @@ func (s *CurrencyService) GetUSDRate(ctx context.Context, currencyCode string) (
 			continue
 		}
 
-		req.Header.Set("User-Agent", fetch.RandomUserAgent())
+		req.Header.Set("User-Agent", fetcher.RandomUserAgent())
 
 		resp, err := s.httpClient.Do(req)
 		if err != nil {

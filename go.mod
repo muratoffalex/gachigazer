@@ -13,15 +13,20 @@ require (
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/pressly/goose/v3 v3.26.0
 	github.com/sirupsen/logrus v1.9.3
+	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.48.0
 	modernc.org/sqlite v1.42.2
 )
 
 require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (

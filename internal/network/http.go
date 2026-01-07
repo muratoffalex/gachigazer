@@ -23,6 +23,7 @@ type HTTPClientConfig struct {
 	TLSHandshakeTimeout   time.Duration
 	ExpectContinueTimeout time.Duration
 	ForceAttemptHTTP2     bool
+	DisableCompression    bool
 }
 
 func NewDefaultHTTPClientConfig(proxy string) HTTPClientConfig {
@@ -35,7 +36,31 @@ func NewDefaultHTTPClientConfig(proxy string) HTTPClientConfig {
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 		ForceAttemptHTTP2:     true,
+		DisableCompression:    false,
 	}
+}
+
+func NewStreamingHTTPClientConfig(proxy string) HTTPClientConfig {
+	return HTTPClientConfig{
+		ProxyURL:              proxy,
+		Timeout:               0,
+		MaxIdleConns:          100,
+		DisableKeepAlives:     true,
+		IdleConnTimeout:       0,
+		TLSHandshakeTimeout:   30 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		ForceAttemptHTTP2:     true,
+		DisableCompression:    true,
+	}
+}
+
+func NewHTTPClientConfigForFetcher(proxy string) HTTPClientConfig {
+	conf := NewDefaultHTTPClientConfig(proxy)
+	conf.Timeout = 30 * time.Second
+	conf.MaxIdleConns = 10
+	conf.IdleConnTimeout = 10 * time.Second
+	conf.DisableKeepAlives = true
+	return conf
 }
 
 func SetupHTTPClient(cfg HTTPClientConfig, logger logger.Logger) *http.Client {

@@ -13,7 +13,7 @@ import (
 
 	"github.com/muratoffalex/gachigazer/internal/ai"
 	"github.com/muratoffalex/gachigazer/internal/config"
-	"github.com/muratoffalex/gachigazer/internal/fetch"
+	"github.com/muratoffalex/gachigazer/internal/fetcher"
 	"github.com/muratoffalex/gachigazer/internal/markdown"
 	"github.com/muratoffalex/gachigazer/internal/service"
 	"github.com/muratoffalex/gachigazer/internal/telegram"
@@ -631,8 +631,8 @@ func (c *Command) extractURLsFromMessage(msg *telegram.MessageOriginal) ([]strin
 		urls = append(urls, c.ExtractURLsFromEntities(msg.Caption, msg.CaptionEntities)...)
 	}
 
-	urls = append(urls, fetch.ExtractStrictURLs(msg.Text)...)
-	urls = append(urls, fetch.ExtractStrictURLs(msg.Caption)...)
+	urls = append(urls, fetcher.ExtractStrictURLs(msg.Text)...)
+	urls = append(urls, fetcher.ExtractStrictURLs(msg.Caption)...)
 
 	return c.filterURLs(urls)
 }

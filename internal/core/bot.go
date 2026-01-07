@@ -15,7 +15,7 @@ import (
 	"github.com/muratoffalex/gachigazer/internal/commands/random"
 	"github.com/muratoffalex/gachigazer/internal/config"
 	"github.com/muratoffalex/gachigazer/internal/database"
-	"github.com/muratoffalex/gachigazer/internal/fetch"
+	"github.com/muratoffalex/gachigazer/internal/fetcher"
 	"github.com/muratoffalex/gachigazer/internal/logger"
 	"github.com/muratoffalex/gachigazer/internal/queue"
 	"github.com/muratoffalex/gachigazer/internal/service"
@@ -359,7 +359,7 @@ func (b *Bot) Start(ctx context.Context) error {
 				}
 			}
 			if b.cfg.Global().FixXPreviews && strings.Contains(commandText, "https://x.com") {
-				urls := fetch.ExtractStrictURLs(commandText)
+				urls := fetcher.ExtractStrictURLs(commandText)
 				if len(urls) == 1 {
 					url := urls[0]
 					modifiedURL := strings.Replace(url, "x.com", "fixupx.com", 1)
