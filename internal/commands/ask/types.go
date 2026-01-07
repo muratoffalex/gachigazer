@@ -65,7 +65,7 @@ func NewMetadataUsageFrom(usage *ai.ModelUsage) *MetadataUsage {
 	if usage == nil {
 		return u
 	}
-	u.Cost = usage.Cost
+	u.Cost = usage.GetCost()
 	u.Input = usage.PromptTokens
 	u.Output = usage.CompletionTokens
 	u.Total = usage.TotalTokens
