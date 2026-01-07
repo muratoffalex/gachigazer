@@ -1,0 +1,15 @@
+all: True
+template: testify
+packages:
+  github.com/muratoffalex/gachigazer/internal/service/youtube:
+    config:
+      dir: "{{.InterfaceDir}}"
+      filename: "mock_{{.InterfaceName}}.go"
+      structname: "{{.Mock}}{{.InterfaceName | firstUpper}}"
+      recursive: True
+  github.com/muratoffalex/gachigazer/internal/fetcher:
+    config:
+      dir: "{{.InterfaceDir}}"
+      filename: "mock_{{.InterfaceName}}.go"
+      structname: "{{.Mock}}{{.InterfaceName | firstUpper}}"
+      recursive: True

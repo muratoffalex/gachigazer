@@ -258,9 +258,33 @@ func (c *Command) Execute(update telegram.Update) error {
 	postURL = escapeMarkdown(postURL, "=", "&")
 	stats += fmt.Sprintf("\n[%s](%s)", c.L("r.fullLabel", nil), postURL)
 
-	caption := fmt.Sprintf("*%s*: `%s`\n*%s*: %d%s\n\n%s",
+	// Check and truncate clickableTags if necessary
+	tagsPrefix := fmt.Sprintf("*%s*: ", c.L("r.tags", nil))
+	scoreAndStats := fmt.Sprintf(
+		"\n*%s*: %d%s\n\n",
+		c.L("r.score", nil),
+		post.Score,
+		stats,
+	)
+	hashtagsPart := strings.Join(requestedHashtags, " ")
+
+	fixedPartsLength := len(tagsPrefix) + len(scoreAndStats) + len(hashtagsPart)
+	maxTagsSpace := maxCaptionLength - fixedPartsLength
+
+	tagsString := "`" + strings.Join(clickableTags, "` `") + "`"
+
+	for len(tagsString) > maxTagsSpace && len(clickableTags) > 0 {
+		clickableTags = clickableTags[:len(clickableTags)-1]
+		if len(clickableTags) > 0 {
+			tagsString = "`" + strings.Join(clickableTags, "` `") + "`"
+		} else {
+			tagsString = ""
+		}
+	}
+
+	caption := fmt.Sprintf("*%s*: %s\n*%s*: %d%s\n\n%s",
 		c.L("r.tags", nil),
-		strings.Join(clickableTags, "` `"),
+		tagsString,
 		c.L("r.score", nil),
 		post.Score,
 		stats,
@@ -326,6 +350,19 @@ func (c *Command) Execute(update telegram.Update) error {
 		video.ReplyMarkup = keyboard
 
 		_, err = c.Tg.Send(video)
+		if strings.Contains(err.Error(), "Bad Request: wrong type") {
+			caption = fmt.Sprintf(
+				"%s\n%s\n\n%s",
+				escapeMarkdown(err.Error()),
+				escapeMarkdown(post.FileURL),
+				caption,
+			)
+			msg := telegram.NewMessage(update.Message.Chat.ID, caption, update.Message.MessageID)
+			msg.ParseMode = telegram.ModeMarkdownV2
+			msg.ReplyMarkup = &keyboard
+
+			_, err = c.Tg.Send(msg)
+		}
 		return err
 	}
 	photo := telegram.NewPhotoMessage(update.Message.Chat.ID, telegram.FileURL(post.FileURL), caption, update.Message.MessageID)

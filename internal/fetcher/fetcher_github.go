@@ -1,4 +1,4 @@
-package fetch
+package fetcher
 
 import (
 	"encoding/base64"
@@ -10,6 +10,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/muratoffalex/gachigazer/internal/logger"
 )
 
 type GitHubRepoInfo struct {
@@ -54,8 +56,18 @@ type GitHubFileContent struct {
 	Encoding string `json:"encoding"`
 }
 
-func (f *Fetcher) parseGithubRepo(URL string) Response {
-	u, err := url.Parse(URL)
+type GithubFetcher struct {
+	BaseFetcher
+}
+
+func NewGithubFetcher(l logger.Logger, client HTTPClient) GithubFetcher {
+	return GithubFetcher{
+		BaseFetcher: NewBaseFetcher(FetcherNameGithub, "github\\.com", client, l),
+	}
+}
+
+func (f GithubFetcher) Handle(request Request) (Response, error) {
+	u, err := url.Parse(request.URL())
 	if err != nil {
 		return f.errorResponse(fmt.Errorf("invalid URL: %v", err))
 	}
@@ -68,6 +80,7 @@ func (f *Fetcher) parseGithubRepo(URL string) Response {
 	owner := pathParts[0]
 	repo := pathParts[1]
 
+	// fetch file content
 	if len(pathParts) > 3 && (pathParts[2] == "blob" || !strings.Contains(pathParts[2], "blob")) {
 		branch := "main" // default branch
 		filePath := ""
@@ -94,7 +107,7 @@ func (f *Fetcher) parseGithubRepo(URL string) Response {
 					repo, filePath, branch, content)},
 			},
 			IsError: false,
-		}
+		}, nil
 	}
 
 	// Fetch repo info
@@ -103,13 +116,11 @@ func (f *Fetcher) parseGithubRepo(URL string) Response {
 		return f.errorResponse(fmt.Errorf("repo info: %v", err))
 	}
 
-	// TODO: add commit count for last 30 days, add count closed issues
-	// Build response text (LLM-optimized format)
-	text := fmt.Sprintf(
-		"GitHub Repository: %s/%s\n"+
-			"Description: %s\n"+
-			"Stars: %d | Forks: %d | Issues: %d\n"+
-			"Created: %s | Updated: %s | Last push: %s ago\n\n",
+	var text strings.Builder
+	fmt.Fprintf(&text, "GitHub Repository: %s/%s\n"+
+		"Description: %s\n"+
+		"Stars: %d | Forks: %d | Issues: %d\n"+
+		"Created: %s | Updated: %s | Last push: %s ago\n\n",
 		owner,
 		repo,
 		repoInfo.Description,
@@ -118,8 +129,7 @@ func (f *Fetcher) parseGithubRepo(URL string) Response {
 		repoInfo.OpenIssues,
 		repoInfo.CreatedAt.Format("2006-01-02"),
 		repoInfo.UpdatedAt.Format("2006-01-02"),
-		time.Since(repoInfo.PushedAt).Round(time.Hour*24),
-	)
+		time.Since(repoInfo.PushedAt).Round(time.Hour*24))
 
 	// Add owner info
 	userInfo, err := f.getUserInfo(owner)
@@ -135,9 +145,8 @@ func (f *Fetcher) parseGithubRepo(URL string) Response {
 		}
 	}
 	if userInfo != nil {
-		text += fmt.Sprintf(
-			"Owner: %s (%s)\n"+
-				"Followers: %d | Public repos: %d | Total stars: %d\n\n",
+		fmt.Fprintf(&text, "Owner: %s (%s)\n"+
+			"Followers: %d | Public repos: %d | Total stars: %d\n\n",
 			userInfo.Login,
 			userInfo.Name,
 			userInfo.Followers,
@@ -149,21 +158,19 @@ func (f *Fetcher) parseGithubRepo(URL string) Response {
 	// Add concise README preview
 	readmeContent, _ := f.getReadme(owner, repo)
 	if readmeContent != "" {
-		text += "README:\n" + readmeContent + "\n\n"
+		text.WriteString("README:\n" + readmeContent + "\n\n")
 	}
 
 	// Add PR summary
 	prs, _ := f.getPullRequests(owner, repo)
 	if len(prs) > 0 {
-		text += "Recent Pull Requests:\n"
+		text.WriteString("Recent Pull Requests:\n")
 		for i, pr := range prs {
-			text += fmt.Sprintf(
-				"- [%s] %s by %s\n  %s\n",
+			fmt.Fprintf(&text, "- [%s] %s by %s\n  %s\n",
 				pr.State,
 				pr.Title,
 				pr.User.Login,
-				pr.HTMLURL,
-			)
+				pr.HTMLURL)
 			if i >= 2 {
 				break // Limit to 3 PRs
 			}
@@ -173,23 +180,15 @@ func (f *Fetcher) parseGithubRepo(URL string) Response {
 	// Create response
 	return Response{
 		Content: []Content{
-			{Type: ContentTypeText, Text: strings.TrimSpace(text)},
+			{Type: ContentTypeText, Text: strings.TrimSpace(text.String())},
 		},
 		IsError: false,
-	}
+	}, nil
 }
 
-// Helper to summarize long text for LLM context
-func (f *Fetcher) summarizeText(text string, maxLen int) string {
-	if len(text) <= maxLen {
-		return text
-	}
-	return text[:maxLen] + "... [truncated]"
-}
-
-func (f *Fetcher) getRepoInfo(owner, repo string) (*GitHubRepoInfo, error) {
+func (f GithubFetcher) getRepoInfo(owner, repo string) (*GitHubRepoInfo, error) {
 	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s", owner, repo)
-	resp, body, err := f.fetch(RequestPayload{URL: apiURL})
+	resp, body, err := f.fetch(MustNewRequestPayload(apiURL, nil, nil))
 	if err != nil {
 		return nil, err
 	}
@@ -203,9 +202,9 @@ func (f *Fetcher) getRepoInfo(owner, repo string) (*GitHubRepoInfo, error) {
 	return &repoInfo, json.Unmarshal([]byte(body), &repoInfo)
 }
 
-func (f *Fetcher) getUserInfo(login string) (*GitHubUserInfo, error) {
+func (f GithubFetcher) getUserInfo(login string) (*GitHubUserInfo, error) {
 	apiURL := fmt.Sprintf("https://api.github.com/users/%s", login)
-	resp, body, err := f.fetch(RequestPayload{URL: apiURL})
+	resp, body, err := f.fetch(MustNewRequestPayload(apiURL, nil, nil))
 	if err != nil {
 		return nil, err
 	}
@@ -219,9 +218,9 @@ func (f *Fetcher) getUserInfo(login string) (*GitHubUserInfo, error) {
 	return &userInfo, json.Unmarshal([]byte(body), &userInfo)
 }
 
-func (f *Fetcher) getReadme(owner, repo string) (string, error) {
+func (f GithubFetcher) getReadme(owner, repo string) (string, error) {
 	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/readme", owner, repo)
-	resp, body, err := f.fetch(RequestPayload{URL: apiURL})
+	resp, body, err := f.fetch(MustNewRequestPayload(apiURL, nil, nil))
 	if err != nil {
 		return "", err
 	}
@@ -246,9 +245,9 @@ func (f *Fetcher) getReadme(owner, repo string) (string, error) {
 	return string(decoded), nil
 }
 
-func (f *Fetcher) getPullRequests(owner, repo string) ([]GitHubPullRequest, error) {
+func (f GithubFetcher) getPullRequests(owner, repo string) ([]GitHubPullRequest, error) {
 	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls?state=all&per_page=3", owner, repo)
-	resp, body, err := f.fetch(RequestPayload{URL: apiURL})
+	resp, body, err := f.fetch(MustNewRequestPayload(apiURL, nil, nil))
 	if err != nil {
 		return nil, err
 	}
@@ -262,16 +261,16 @@ func (f *Fetcher) getPullRequests(owner, repo string) ([]GitHubPullRequest, erro
 	return prs, json.Unmarshal([]byte(body), &prs)
 }
 
-func (f *Fetcher) getUserTotalStars(login string) (int, error) {
+func (f GithubFetcher) getUserTotalStars(login string) (int, error) {
 	apiURL := fmt.Sprintf("https://api.github.com/users/%s/repos?per_page=100", login)
-	resp, body, err := f.fetch(RequestPayload{URL: apiURL})
+	resp, body, err := f.fetch(MustNewRequestPayload(apiURL, nil, nil))
 	if err != nil {
 		return 0, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("Repos API error: %s", resp.Status)
+		return 0, fmt.Errorf("repos API error: %s", resp.Status)
 	}
 
 	var repos []struct {
@@ -289,54 +288,9 @@ func (f *Fetcher) getUserTotalStars(login string) (int, error) {
 	return totalStars, nil
 }
 
-// for last 30 days
-func (f *Fetcher) getCommitCount(owner, repo string) (int, error) {
-	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits?since=%s",
-		owner,
-		repo,
-		time.Now().AddDate(0, -1, 0).Format(time.RFC3339))
-
-	resp, body, err := f.fetch(RequestPayload{URL: apiURL})
-	if err != nil {
-		return 0, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return 0, fmt.Errorf("status %d", resp.StatusCode)
-	}
-
-	var commits []any
-	if err := json.Unmarshal([]byte(body), &commits); err != nil {
-		return 0, err
-	}
-	return len(commits), nil
-}
-
-func (f *Fetcher) getClosedIssuesCount(owner, repo string) (int, error) {
-	apiURL := fmt.Sprintf("https://api.github.com/search/issues?q=repo:%s/%s+type:issue+state:closed", owner, repo)
-	resp, body, err := f.fetch(RequestPayload{URL: apiURL})
-	if err != nil {
-		return 0, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return 0, fmt.Errorf("status %d", resp.StatusCode)
-	}
-
-	var result struct {
-		TotalCount int `json:"total_count"`
-	}
-	if err := json.Unmarshal([]byte(body), &result); err != nil {
-		return 0, err
-	}
-	return result.TotalCount, nil
-}
-
-func (f *Fetcher) getFileContent(owner, repo, branch, path string) (string, error) {
+func (f GithubFetcher) getFileContent(owner, repo, branch, path string) (string, error) {
 	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s?ref=%s", owner, repo, path, branch)
-	resp, body, err := f.fetch(RequestPayload{URL: apiURL})
+	resp, body, err := f.fetch(MustNewRequestPayload(apiURL, nil, nil))
 	if err != nil {
 		return "", err
 	}
@@ -373,7 +327,7 @@ func (f *Fetcher) getFileContent(owner, repo, branch, path string) (string, erro
 	return string(decoded), nil
 }
 
-func (f *Fetcher) isBinary(data []byte) bool {
+func (f GithubFetcher) isBinary(data []byte) bool {
 	if len(data) > 1024 {
 		data = data[:1024] // Check first 1KB
 	}

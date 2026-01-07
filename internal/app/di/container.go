@@ -12,12 +12,13 @@ import (
 	"github.com/muratoffalex/gachigazer/internal/cache"
 	"github.com/muratoffalex/gachigazer/internal/config"
 	"github.com/muratoffalex/gachigazer/internal/database"
-	"github.com/muratoffalex/gachigazer/internal/fetch"
+	"github.com/muratoffalex/gachigazer/internal/fetcher"
 	"github.com/muratoffalex/gachigazer/internal/logger"
 	"github.com/muratoffalex/gachigazer/internal/markdown"
 	"github.com/muratoffalex/gachigazer/internal/network"
 	"github.com/muratoffalex/gachigazer/internal/queue"
 	"github.com/muratoffalex/gachigazer/internal/service"
+	"github.com/muratoffalex/gachigazer/internal/service/youtube"
 	"github.com/muratoffalex/gachigazer/internal/telegram"
 )
 
@@ -33,7 +34,8 @@ type Container struct {
 	ChatService *service.ChatService
 	HttpClient  *http.Client
 	Localizer   *service.Localizer
-	Fetcher     *fetch.Fetcher
+	Fetcher     *fetcher.Manager
+	YtService   *youtube.Service
 }
 
 func NewContainer(cfg *config.Config) (*Container, error) {
@@ -67,7 +69,24 @@ func NewContainer(cfg *config.Config) (*Container, error) {
 
 	httpCfg := network.NewDefaultHTTPClientConfig(cfg.HTTP().GetProxy())
 	container.HttpClient = network.SetupHTTPClient(httpCfg, l)
-	container.Fetcher = fetch.NewFetcher(cfg.HTTP().GetProxy(), l)
+
+	ytService := youtube.NewService(l, container.HttpClient, youtube.Config{
+		Proxy:       cfg.HTTP().GetProxy(),
+		MaxComments: 50,
+	})
+	container.YtService = &ytService
+
+	fetcherHTTPCfg := network.NewHTTPClientConfigForFetcher(cfg.HTTP().GetProxy())
+	fetcherHTTPClient := network.SetupHTTPClient(fetcherHTTPCfg, l)
+	fetcherManager := fetcher.NewManager(l)
+	fetcherManager.RegisterFetcher(fetcher.NewRedditFetcher(l, fetcherHTTPClient))
+	fetcherManager.RegisterFetcher(fetcher.NewHabrFetcher(l, fetcherHTTPClient))
+	fetcherManager.RegisterFetcher(fetcher.NewGithubFetcher(l, fetcherHTTPClient))
+	fetcherManager.RegisterFetcher(fetcher.NewOpennetFetcher(l, fetcherHTTPClient))
+	fetcherManager.RegisterFetcher(fetcher.NewTelegramFetcher(l, fetcherHTTPClient))
+	fetcherManager.RegisterFetcher(fetcher.NewYoutubeFetcher(l, fetcherHTTPClient, &ytService))
+	fetcherManager.SetDefaultFetcher(fetcher.NewDefaultFetcher(l, fetcherHTTPClient))
+	container.Fetcher = fetcherManager
 
 	providerRegistry := ai.NewProviderRegistry(cfg, l)
 	for _, providerCfg := range cfg.AI().Providers {

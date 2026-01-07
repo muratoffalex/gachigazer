@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/muratoffalex/gachigazer/internal/fetch"
+	"github.com/muratoffalex/gachigazer/internal/fetcher"
 )
 
 var (
@@ -91,7 +91,7 @@ func (d *DuckDuckGoSearch) getURL(method string, urlStr string, params url.Value
 
 	req.URL.RawQuery = params.Encode()
 	req.Header.Set("Referer", "https://duckduckgo.com/")
-	req.Header.Set("User-Agent", fetch.RandomUserAgent())
+	req.Header.Set("User-Agent", fetcher.RandomUserAgent())
 
 	resp, err := d.client.Do(req)
 	if err != nil {

@@ -11,6 +11,12 @@ run:
 	pip install -r requirements.txt && \
 	go run cmd/bot/main.go
 
+mock:
+	mockery
+
+test:
+	gotestsum --format-icons hivis ./...
+
 build-dev:
 	CGO_ENABLED=0 go build -ldflags="-X main.version=$(VERSION) -X main.buildTime=$(BUILD_TIME)" -o $(OUTPUT_PATH) ./cmd/bot/main.go
 
@@ -25,4 +31,3 @@ docker-run:
 
 docker-sh:
 	docker exec -it gg sh
-

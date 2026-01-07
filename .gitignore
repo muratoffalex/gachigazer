@@ -7,3 +7,4 @@
 /bin/
 /*.toml
 /*.json
+mock_*

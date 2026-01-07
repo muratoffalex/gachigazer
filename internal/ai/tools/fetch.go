@@ -3,13 +3,15 @@ package tools
 import (
 	"errors"
 
-	"github.com/muratoffalex/gachigazer/internal/fetch"
+	fetch "github.com/muratoffalex/gachigazer/internal/fetcher"
 )
 
 func (t Tools) Fetch_url(url string) (string, error) {
-	content := t.fetcher.Txt(fetch.RequestPayload{
-		URL: url,
-	})
+	req, err := fetch.NewRequestPayload(url, nil, nil)
+	if err != nil {
+		return "Error", err
+	}
+	content, _ := t.fetcher.Fetch(req)
 	if content.IsError {
 		return "Error", errors.New("error")
 	}
