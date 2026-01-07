@@ -80,14 +80,14 @@ func (c *Command) L(messageID string, data map[string]any) string {
 
 func (c *Command) ExtractURLsFromEntities(text string, entities []telegram.MessageEntity) []string {
 	urls := []string{}
-	textLen := len(text)
+	runes := []rune(text)
 	for _, entity := range entities {
 		if (entity.Type == "url" || entity.Type == "text_link") &&
 			entity.Offset >= 0 &&
 			entity.Length > 0 &&
-			entity.Offset+entity.Length <= textLen {
+			entity.Offset+entity.Length <= len(runes) {
 
-			url := text[entity.Offset : entity.Offset+entity.Length]
+			url := string(runes[entity.Offset : entity.Offset+entity.Length])
 			if entity.Type == "text_link" && entity.URL != "" {
 				url = entity.URL
 			}
