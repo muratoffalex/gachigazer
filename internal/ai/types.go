@@ -364,17 +364,40 @@ type UsageDetails struct {
 	CachedTokens    int `json:"cached_tokens,omitempty"`
 }
 
+type CostDetails struct {
+	UpstreamInferenceCost            float64 `json:"upstream_inference_cost"`
+	UpstreamInferencePromptCost      float64 `json:"upstream_inference_prompt_cost"`
+	UpstreamInferenceCompletionsCost float64 `json:"upstream_inference_completions_cost"`
+}
+
 type ModelUsage struct {
 	CompletionTokens       int64        `json:"completion_tokens"`
 	CompletionTokensDetail UsageDetails `json:"completion_tokens_details"`
 	Cost                   float64      `json:"cost"`
+	IsByok                 bool         `json:"is_byok"`
+	CostDetails            CostDetails  `json:"cost_details"`
 	PromptTokens           int64        `json:"prompt_tokens"`
 	PromptTokensDetail     UsageDetails `json:"prompt_tokens_details"`
 	TotalTokens            int64        `json:"total_tokens"`
 }
 
+func (u *ModelUsage) GetCost() float64 {
+	var cost float64
+	if u.Cost != 0 {
+		cost = float64(u.Cost)
+	}
+
+	cd := u.CostDetails
+	inferenceCost := cd.UpstreamInferenceCost + cd.UpstreamInferencePromptCost + cd.UpstreamInferenceCompletionsCost
+	if inferenceCost > 0 {
+		cost = inferenceCost
+	}
+
+	return cost
+}
+
 func (u *ModelUsage) GetCostInDollars() float64 {
-	return float64(u.Cost) / 1000
+	return float64(u.GetCost()) / 1000
 }
 
 type MessageResponse struct {
