@@ -17,6 +17,9 @@ mock:
 test:
 	gotestsum --format-icons hivis ./...
 
+test-ci: mock
+	go test ./...
+
 build-dev:
 	CGO_ENABLED=0 go build -ldflags="-X main.version=$(VERSION) -X main.buildTime=$(BUILD_TIME)" -o $(OUTPUT_PATH) ./cmd/bot/main.go
 
