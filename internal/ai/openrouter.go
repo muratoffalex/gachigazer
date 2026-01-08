@@ -121,6 +121,8 @@ func (c *OpenRouterClient) Ask(ctx context.Context, request CompletionRequest, h
 		request.Model = c.defaultModel
 	}
 
+	headers = c.setHeaders(headers)
+
 	return c.OpenAICompatibleClient.Ask(ctx, request, headers)
 }
 
@@ -136,11 +138,8 @@ func (c *OpenRouterClient) AskStream(ctx context.Context, request CompletionRequ
 		request.Model = c.defaultModel
 	}
 
-	if headers == nil {
-		headers = map[string]string{}
-	}
-	headers["X-Title"] = "Gachigazer"
-	// headers["HTTP-Referrer"] = ""
+	headers = c.setHeaders(headers)
+
 	request.Provider = struct {
 		Sort              string `json:"sort,omitzero"` // price, latency, throughput
 		RequireParameters bool   `json:"require_parameters,omitzero"`
@@ -163,4 +162,14 @@ func (c *OpenRouterClient) GetModelInfo(name string) (*ModelInfo, error) {
 		name = model
 	}
 	return c.OpenAICompatibleClient.GetModelInfo(name)
+}
+
+func (c *OpenRouterClient) setHeaders(headers map[string]string) map[string]string {
+	if headers == nil {
+		headers = map[string]string{}
+	}
+	headers["X-Title"] = "Gachigazer"
+	// headers["HTTP-Referrer"] = ""
+
+	return headers
 }
