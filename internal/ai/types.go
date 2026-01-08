@@ -381,14 +381,12 @@ type ModelUsage struct {
 	TotalTokens            int64        `json:"total_tokens"`
 }
 
+// GetCost returns the cost of executing the request.
+// Typically, Cost=0 for BYOK providers. Their price is in cost_details.upstream_inference_cost.
 func (u *ModelUsage) GetCost() float64 {
-	var cost float64
-	if u.Cost != 0 {
-		cost = float64(u.Cost)
-	}
+	cost := u.Cost
 
-	cd := u.CostDetails
-	inferenceCost := cd.UpstreamInferenceCost + cd.UpstreamInferencePromptCost + cd.UpstreamInferenceCompletionsCost
+	inferenceCost := u.CostDetails.UpstreamInferenceCost
 	if inferenceCost > 0 {
 		cost = inferenceCost
 	}
