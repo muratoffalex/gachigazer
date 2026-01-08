@@ -66,12 +66,16 @@ func (c *OpenAICompatibleClient) Name() string {
 }
 
 func (c *OpenAICompatibleClient) makeRawRequest(ctx context.Context, method string, endpoint string, body any, headers map[string]string) (*http.Response, error) {
-	requestBody, err := json.Marshal(body)
-	if err != nil {
-		return nil, fmt.Errorf("marshal error: %w", err)
+	var requestBody io.Reader
+	if body != nil {
+		marshalBody, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("marshal error: %w", err)
+		}
+		requestBody = bytes.NewBuffer(marshalBody)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, endpoint, bytes.NewBuffer(requestBody))
+	req, err := http.NewRequestWithContext(ctx, method, endpoint, requestBody)
 	if err != nil {
 		return nil, fmt.Errorf("create request error: %w", err)
 	}
@@ -317,7 +321,7 @@ func (c *OpenAICompatibleClient) doRequest(
 }
 
 func (c *OpenAICompatibleClient) getModelsFromAPI(ctx context.Context) (map[string]*ModelInfo, error) {
-	_, body, err := c.doRequest(ctx, "GET", "models", nil, nil, false)
+	_, body, err := c.doRequest(ctx, http.MethodGet, "models", nil, nil, false)
 	if err != nil {
 		return nil, fmt.Errorf("models request error: %w", err)
 	}
