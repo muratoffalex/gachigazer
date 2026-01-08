@@ -129,7 +129,7 @@ func (f GithubFetcher) Handle(request Request) (Response, error) {
 		repoInfo.OpenIssues,
 		repoInfo.CreatedAt.Format("2006-01-02"),
 		repoInfo.UpdatedAt.Format("2006-01-02"),
-		time.Since(repoInfo.PushedAt).Round(time.Hour*24))
+		time.Since(repoInfo.PushedAt).Round(time.Second))
 
 	// Add owner info
 	userInfo, err := f.getUserInfo(owner)
