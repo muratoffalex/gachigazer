@@ -95,7 +95,7 @@ func Load() (*Config, error) {
 		aiSystemPrompt:             "",
 		aiLanguage:                 "English",
 		aiUseStream:                true,
-		aiMaxTokens:                850,
+		aiMaxTokens:                1000,
 		aiMaxImagesInContext:       5,
 		aiUtilityModel:             "",
 		aiMultimodalModel:          "",
