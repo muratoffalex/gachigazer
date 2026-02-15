@@ -12,7 +12,7 @@ require (
 	github.com/lrstanley/go-ytdlp v1.3.0
 	github.com/nicksnyder/go-i18n/v2 v2.6.1
 	github.com/pressly/goose/v3 v3.26.0
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.49.0
 	modernc.org/sqlite v1.44.3
