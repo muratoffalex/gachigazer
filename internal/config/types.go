@@ -300,6 +300,10 @@ func (c aiConfig) GetToolsModel() string {
 	return ""
 }
 
+func (c aiConfig) GetDefaultModel() string {
+	return c.DefaultModel
+}
+
 func (c aiConfig) GetDefaultProviderAndModel() (provider, model string) {
 	parts := strings.SplitN(c.DefaultModel, ":", 2)
 	if len(parts) < 2 {

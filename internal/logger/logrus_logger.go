@@ -21,8 +21,6 @@ func NewLogrusLogger(cfg *config.LoggingConfig) Logger {
 		TimestampFormat: "2006-01-02 15:04:05",
 	})
 
-	level := logrus.WarnLevel
-	l.SetLevel(level)
 	level, err := logrus.ParseLevel(cfg.Level())
 	if err != nil {
 		l.WithFields(logrus.Fields{

@@ -242,7 +242,30 @@ func (c *Command) Execute(update telegram.Update) error {
 	}
 
 	if strings.HasPrefix(args, "reset") {
-		err := c.db.DeleteChatModel(chatID)
+		modelSpec := c.Cfg.AI().GetDefaultModel()
+		model, err := c.ai.GetFormattedModel(ctx, modelSpec, "")
+		provider := c.Cfg.AI().GetProvider(model.Provider)
+		isAllowedUser := c.Cfg.Telegram().IsUserAllowed(update.Message.From.ID) && !provider.OnlyFreeModels
+
+		if !isAllowedUser {
+			freeModels, err := c.ai.GetAllModels(context.Background(), true, true)
+			if err != nil {
+				return err
+			}
+			examples := c.getFreeModelExamples(freeModels)
+			msg := telegram.NewMessage(
+				chatID,
+				c.Localizer.Localize("model.freeUsageInstructions", map[string]any{
+					"Examples": strings.Join(examples, "\n"),
+				}),
+				update.Message.MessageID,
+			)
+			msg.ParseMode = telegram.ModeMarkdownV2
+			_, err = c.Tg.Send(msg)
+			return err
+		}
+
+		err = c.ChatService.ResetChatModel(context.Background(), chatID)
 		if err != nil {
 			c.Logger.WithFields(logger.Fields{
 				"chat_id": chatID,
@@ -251,8 +274,6 @@ func (c *Command) Execute(update telegram.Update) error {
 			_, _ = c.Tg.Send(msg)
 			return err
 		}
-
-		c.ChatService.ResetChatModel(context.Background(), chatID)
 
 		c.Logger.WithFields(logger.Fields{
 			"chat_id": chatID,
@@ -303,19 +324,7 @@ func (c *Command) Execute(update telegram.Update) error {
 		}
 
 		if !modelIsFree {
-			var examples []string
-
-			i := 0
-			for _, models := range freeModels {
-				for _, m := range models {
-					if i >= 3 {
-						break
-					}
-					examples = append(examples, fmt.Sprintf("`%s`", markdown.Escape(m.FullName())))
-					i++
-				}
-			}
-
+			examples := c.getFreeModelExamples(freeModels)
 			msg := telegram.NewMessage(
 				chatID,
 				c.Localizer.Localize("model.freeUsageInstructions", map[string]any{
@@ -362,4 +371,21 @@ func (c *Command) Execute(update telegram.Update) error {
 	msg.ParseMode = telegram.ModeMarkdownV2
 	_, err = c.Tg.Send(msg)
 	return err
+}
+
+func (c *Command) getFreeModelExamples(models map[string][]*ai.ModelInfo) []string {
+	var examples []string
+
+	i := 0
+	for _, models := range models {
+		for _, m := range models {
+			if i >= 3 {
+				break
+			}
+			examples = append(examples, fmt.Sprintf("`%s`", markdown.Escape(m.FullName())))
+			i++
+		}
+	}
+
+	return examples
 }
