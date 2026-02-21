@@ -242,6 +242,11 @@ func (s *sqliteDB) PurgeOldMessages(retentionDays int) error {
 	return err
 }
 
+func (s *sqliteDB) PurgeOldTasks(retentionDays int) error {
+	_, err := s.db.Exec("DELETE FROM tasks WHERE created_at < datetime('now', ?)", fmt.Sprintf("-%d days", retentionDays))
+	return err
+}
+
 func (s *sqliteDB) LoadAllChatModels() (map[int64]string, error) {
 	models := make(map[int64]string)
 	rows, err := s.db.Query("SELECT chat_id, model FROM chat_settings")

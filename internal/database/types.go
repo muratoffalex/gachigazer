@@ -34,6 +34,7 @@ type Database interface {
 	GetMessagesBy(chatID int64, ignoreMessageID int64, duration time.Duration, count int, username string) ([]telegram.Update, error)
 	GetMessagesWithMediaGroupID(chatID int64, mediaGroupID string) ([]telegram.Update, error)
 	PurgeOldMessages(retentionDays int) error
+	PurgeOldTasks(retentionDays int) error
 }
 
 type User struct {

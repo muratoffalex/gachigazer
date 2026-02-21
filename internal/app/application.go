@@ -134,12 +134,19 @@ func (a *Application) WaitForShutdown() {
 }
 
 func (a *Application) StartMessageCleaner() {
+	// Clean old tasks on startup (keep 1 day for debugging)
+	if err := a.di.DB.PurgeOldTasks(1); err != nil {
+		a.di.Logger.Error("Failed to purge old tasks on startup: ", err)
+	}
 	go func() {
 		ticker := time.NewTicker(1 * time.Hour)
 		defer ticker.Stop()
 		for range ticker.C {
 			if err := a.di.DB.PurgeOldMessages(a.di.Cfg.Global().MessageRetentionDays); err != nil {
 				a.di.Logger.Error("Failed to purge old messages: ", err)
+			}
+			if err := a.di.DB.PurgeOldTasks(1); err != nil {
+				a.di.Logger.Error("Failed to purge old tasks: ", err)
 			}
 		}
 	}()
