@@ -28,7 +28,6 @@ import (
 	"github.com/muratoffalex/gachigazer/internal/logger"
 	"github.com/muratoffalex/gachigazer/internal/markdown"
 	"github.com/muratoffalex/gachigazer/internal/service"
-	"github.com/muratoffalex/gachigazer/internal/service/cancel"
 	"github.com/muratoffalex/gachigazer/internal/telegram"
 )
 
@@ -36,8 +35,6 @@ const (
 	CommandName      = "ask"
 	BotMessageMarker = "\u200B"
 )
-
-var ErrRequestCancelled = errors.New("request cancelled by user")
 
 type Argument struct {
 	Name         string
@@ -62,7 +59,6 @@ type Command struct {
 	args          *CommandArgs
 	cmdCfg        *config.AskCommandConfig
 	toolsRunner   *tools.Tools
-	cancelManager *cancel.Manager
 }
 
 func (c *Command) Name() string {
@@ -82,11 +78,10 @@ func New(di *di.Container) *Command {
 	availableTools := strings.Join(tools.ToolNames(toolsCfg.Allowed, toolsCfg.Excluded), ", ")
 	toolsRunner := tools.NewTools(di.HttpClient, di.Fetcher, di.YtService, di.Logger)
 	cmd := &Command{
-		fetcher:       di.Fetcher,
-		httpClient:    di.HttpClient,
-		cmdCfg:        di.Cfg.GetAskCommandConfig(),
-		toolsRunner:   toolsRunner,
-		cancelManager: di.CancelManager,
+		fetcher:     di.Fetcher,
+		httpClient:  di.HttpClient,
+		cmdCfg:      di.Cfg.GetAskCommandConfig(),
+		toolsRunner: toolsRunner,
 		supportedArgs: []Argument{
 			{
 				Name:        "m",
@@ -728,52 +723,17 @@ func (c *Command) Execute(update telegram.Update) error {
 
 	currentContent.Media = currentContent.FilterMedia(c.args.HandleImages, c.args.HandleAudio, c.args.HandleFiles)
 
+	// Create timeout context for AI calls (preprocessing + main request)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+
 	// --- Send thinking message before any processing ---
 	thinkingText := c.L("ask.thinking", nil)
-
-	var botMessageID int
-	if editedMessage != 0 {
-		// Retry case: edit existing message without cancel button
-		botMessageID, err = c.sendOrEditMessage(chatID, messageID, editedMessage, thinkingText, nil)
-		if err != nil {
-			c.Logger.WithError(err).Error("Failed to send thinking message")
-			return err
-		}
-	} else {
-		// New request: send message with cancel button
-		cancelButton := telegram.NewInlineKeyboardButtonData(
-			c.L("ask.cancelButton", nil),
-			fmt.Sprintf("ask cancel:%d", 0), // placeholder, will be updated
-		)
-		replyMarkup := &telegram.InlineKeyboardMarkup{
-			InlineKeyboard: [][]telegram.InlineKeyboardButton{{cancelButton}},
-		}
-
-		msg := telegram.NewMessage(chatID, thinkingText, messageID)
-		msg.ReplyMarkup = replyMarkup
-
-		sentMsg, err := c.Tg.Send(msg)
-		if err != nil {
-			c.Logger.WithError(err).Error("Failed to send thinking message")
-			return err
-		}
-		botMessageID = sentMsg.MessageID
-
-		// Update callback data with correct messageID
-		cancelButton = telegram.NewInlineKeyboardButtonData(
-			c.L("ask.cancelButton", nil),
-			fmt.Sprintf("ask cancel:%d", botMessageID),
-		)
-		replyMarkup = &telegram.InlineKeyboardMarkup{
-			InlineKeyboard: [][]telegram.InlineKeyboardButton{{cancelButton}},
-		}
-		editMarkup := telegram.NewEditMessageReplyMarkup(chatID, botMessageID, replyMarkup)
-		_, _ = c.Tg.Send(editMarkup) // Ignore error, not critical
+	botMessageID, err := c.sendOrEditMessage(chatID, messageID, editedMessage, thinkingText, nil)
+	if err != nil {
+		c.Logger.WithError(err).Error("Failed to send thinking message")
+		return err
 	}
-
-	// Create cancellable context for AI calls
-	ctx, unregister := c.cancelManager.Register(chatID, botMessageID, "ask")
-	defer unregister()
 
 	// --- Preprocess images with multimodal model if enabled ---
 	// This will convert images to text description and remove them from media
@@ -961,9 +921,6 @@ func (c *Command) Execute(update telegram.Update) error {
 		toolFromCallback,
 	)
 	if err != nil {
-		if errors.Is(err, ErrRequestCancelled) {
-			return nil
-		}
 		return err
 	}
 
@@ -1172,15 +1129,9 @@ func (c *Command) Execute(update telegram.Update) error {
 	)
 	secondAttempt.LinkPreviewDisabled = true
 
-	// Remove cancel button and set tools buttons if any
 	if replyMarkup != nil {
 		firstAttempt.ReplyMarkup = replyMarkup
 		secondAttempt.ReplyMarkup = replyMarkup
-	} else {
-		// Explicitly remove inline keyboard (cancel button)
-		emptyMarkup := &telegram.InlineKeyboardMarkup{InlineKeyboard: [][]telegram.InlineKeyboardButton{}}
-		firstAttempt.ReplyMarkup = emptyMarkup
-		secondAttempt.ReplyMarkup = emptyMarkup
 	}
 
 	if _, err = c.Tg.SendWithRetry(&firstAttempt, 0); err != nil {
@@ -1217,117 +1168,6 @@ func (c *Command) Execute(update telegram.Update) error {
 	}
 
 	return nil
-}
-
-func (c *Command) HandleCallback(callbackData string, update telegram.Update) error {
-	parts := strings.SplitN(callbackData, " ", 2)
-	if len(parts) < 2 {
-		return fmt.Errorf("invalid callback data format: %s", callbackData)
-	}
-
-	actionData := strings.SplitN(parts[1], ":", 2)
-	action := actionData[0]
-
-	msg := update.CallbackQuery.Message
-
-	switch action {
-	case "cancel":
-		if len(actionData) < 2 {
-			return fmt.Errorf("cancel requires messageID")
-		}
-		messageID, err := strconv.Atoi(actionData[1])
-		if err != nil {
-			return fmt.Errorf("invalid messageID: %w", err)
-		}
-		return c.handleCancel(msg.Chat.ID, messageID)
-
-	case "retry":
-		if len(actionData) < 2 {
-			return fmt.Errorf("retry requires messageID")
-		}
-		messageID, err := strconv.ParseInt(actionData[1], 10, 64)
-		if err != nil {
-			return fmt.Errorf("invalid messageID: %w", err)
-		}
-		return c.handleRetry(update, msg.Chat.ID, messageID)
-
-	case "all", "$tools":
-		// Handle tools callback
-		return c.handleToolsCallback(update, parts[1])
-
-	default:
-		return fmt.Errorf("unknown callback action: %s", action)
-	}
-}
-
-func (c *Command) handleCancel(chatID int64, messageID int) error {
-	progress := c.cancelManager.GetProgress(chatID, messageID)
-
-	if cancelled := c.cancelManager.Cancel(chatID, messageID); !cancelled {
-		return nil
-	}
-
-	var finalText string
-	if progress != "" {
-		finalText = fmt.Sprintf("%s\n\n[%s]", progress, c.L("ask.cancelled", nil))
-	} else {
-		finalText = "[" + c.L("ask.cancelled", nil) + "]"
-	}
-
-	finalText, _ = c.Tg.TelegramifyMarkdown(finalText)
-
-	editMsg := telegram.NewEditMessageText(
-		chatID,
-		messageID,
-		finalText,
-	)
-	editMsg.ReplyMarkup = &telegram.InlineKeyboardMarkup{InlineKeyboard: [][]telegram.InlineKeyboardButton{}}
-
-	_, err := c.Tg.Send(editMsg)
-	return err
-}
-
-func (c *Command) handleRetry(update telegram.Update, chatID int64, messageID int64) error {
-	dbMessage, err := c.db.GetMessage(chatID, int(messageID))
-	if err != nil {
-		return fmt.Errorf("get message from DB failed: %w", err)
-	}
-
-	dbMessage.CallbackQuery = update.CallbackQuery
-	return c.Handle(*dbMessage)
-}
-
-func (c *Command) handleToolsCallback(update telegram.Update, data string) error {
-	parts := strings.Split(data, " ")
-	if len(parts) < 3 {
-		return fmt.Errorf("invalid tools callback data: %s", data)
-	}
-
-	tool := parts[0]
-	args := strings.Join(parts[1:], " ")
-
-	msg := update.CallbackQuery.Message
-
-	if tool == "all" {
-		msg.Text = "Run tools from your previous message " + args
-	} else {
-		msg.Text = fmt.Sprintf("Run only tool %s %s", tool, args)
-	}
-	msg.Caption = ""
-	msg.ReplyToMessage = nil
-	msg.From = update.CallbackQuery.From
-
-	editMsg := telegram.NewEditMessageReplyMarkup(
-		msg.Chat.ID,
-		msg.MessageID,
-		&telegram.InlineKeyboardMarkup{InlineKeyboard: [][]telegram.InlineKeyboardButton{}},
-	)
-	_, err := c.Tg.Send(editMsg)
-	if err != nil {
-		c.Logger.WithError(err).Error("Delete reply markup from message failed")
-	}
-
-	return c.Handle(telegram.Update{Message: msg})
 }
 
 func (c *Command) updateConversationTitle(title, source string, chatID, conversationID int64) error {
@@ -2389,15 +2229,6 @@ func (c *Command) AskStream(
 		}
 
 		var editMsg *telegram.EditMessageTextConfig
-
-		cancelButton := telegram.NewInlineKeyboardButtonData(
-			c.L("ask.cancelButton", nil),
-			fmt.Sprintf("ask cancel:%d", sentMsgID),
-		)
-		cancelMarkup := &telegram.InlineKeyboardMarkup{
-			InlineKeyboard: [][]telegram.InlineKeyboardButton{{cancelButton}},
-		}
-
 		if chunk.Reasoning != "" {
 			reasoningBuffer.WriteString(chunk.Reasoning)
 
@@ -2409,7 +2240,6 @@ func (c *Command) AskStream(
 						"Reasoning": reasoningBuffer.String(),
 					}),
 				)
-				msg.ReplyMarkup = cancelMarkup
 				editMsg = &msg
 				lastUpdateReasoning = time.Now()
 			}
@@ -2418,8 +2248,6 @@ func (c *Command) AskStream(
 		if chunk.Content != "" {
 			hasContent = true
 			fullResponse.WriteString(chunk.Content)
-
-			c.cancelManager.UpdateProgress(chatID, sentMsgID, fullResponse.String())
 
 			if time.Since(lastUpdate) > updateThreshold && fullResponse.Len() > 3 {
 				msgText := fullResponse.String() + "..."
@@ -2440,7 +2268,6 @@ func (c *Command) AskStream(
 					msgText,
 				)
 				msg.ParseMode = telegram.ModeMarkdownV2
-				msg.ReplyMarkup = cancelMarkup
 				editMsg = &msg
 				lastUpdate = time.Now()
 			}
@@ -2810,12 +2637,6 @@ func (c *Command) handleRequest(
 				chatID, false, *params,
 			)
 		}
-
-		// Check if request was cancelled
-		if ctx.Err() == context.Canceled {
-			return nil, nil, ErrRequestCancelled
-		}
-
 		if err != nil {
 			if ai.IsRetryableError(err) && c.retryCount < maxRetries {
 				c.retryCount++

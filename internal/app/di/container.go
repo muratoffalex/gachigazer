@@ -18,26 +18,24 @@ import (
 	"github.com/muratoffalex/gachigazer/internal/network"
 	"github.com/muratoffalex/gachigazer/internal/queue"
 	"github.com/muratoffalex/gachigazer/internal/service"
-	"github.com/muratoffalex/gachigazer/internal/service/cancel"
 	"github.com/muratoffalex/gachigazer/internal/service/youtube"
 	"github.com/muratoffalex/gachigazer/internal/telegram"
 )
 
 type Container struct {
-	BotClient     telegram.Client
-	TD            *service.TelegramAPI
-	Logger        logger.Logger
-	DB            database.Database
-	Cache         cache.Cache
-	Cfg           *config.Config
-	Queue         *queue.Queue
-	AI            *ai.ProviderRegistry
-	ChatService   *service.ChatService
-	HttpClient    *http.Client
-	Localizer     *service.Localizer
-	Fetcher       *fetcher.Manager
-	YtService     *youtube.Service
-	CancelManager *cancel.Manager
+	BotClient   telegram.Client
+	TD          *service.TelegramAPI
+	Logger      logger.Logger
+	DB          database.Database
+	Cache       cache.Cache
+	Cfg         *config.Config
+	Queue       *queue.Queue
+	AI          *ai.ProviderRegistry
+	ChatService *service.ChatService
+	HttpClient  *http.Client
+	Localizer   *service.Localizer
+	Fetcher     *fetcher.Manager
+	YtService   *youtube.Service
 }
 
 func NewContainer(cfg *config.Config) (*Container, error) {
@@ -155,7 +153,6 @@ func NewContainer(cfg *config.Config) (*Container, error) {
 	container.BotClient = botClient
 	container.ChatService = chatService
 	container.AI = providerRegistry
-	container.CancelManager = cancel.NewManager()
 
 	return container, nil
 }

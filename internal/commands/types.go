@@ -26,13 +26,3 @@ type QueueConfig struct {
 	Timeout    time.Duration
 	Throttle   ThrottleConfig
 }
-
-// CallbackHandler позволяет командам обрабатывать inline-кнопки
-// без модификации core/bot.go
-type CallbackHandler interface {
-	Command
-	// HandleCallback вызывается когда приходит callback_query
-	// callbackData - полная строка callback.Data (например, "ask cancel:12345")
-	// update - полный update с CallbackQuery
-	HandleCallback(callbackData string, update telegram.Update) error
-}
