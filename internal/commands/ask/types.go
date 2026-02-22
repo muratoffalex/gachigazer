@@ -319,7 +319,15 @@ func (c *Context) GetFormattedString(
 			l.Localize("ask.response.images", nil),
 			len(c.Images),
 		)
-		if !model.SupportsImageRecognition() {
+		// Check if all images are preprocessed
+		allPreprocessed := true
+		for _, img := range c.Images {
+			if img != "preprocessed" {
+				allPreprocessed = false
+				break
+			}
+		}
+		if !allPreprocessed && !model.SupportsImageRecognition() {
 			item += " · ⚠️ " + l.Localize("ask.response.modelDoesntSupportImages", nil)
 		}
 		formatted = append(formatted, item)

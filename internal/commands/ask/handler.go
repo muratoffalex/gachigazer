@@ -436,6 +436,7 @@ func (c *Command) Execute(update telegram.Update) error {
 	}
 	// --- Fetch Conversation History ---
 	totalUsage := &MetadataUsage{}
+	var preprocessUsage *MetadataUsage
 	if latestMessage != nil {
 		var conversationHistory []conversationMessage
 		c.Logger.WithFields(logger.Fields{
@@ -695,13 +696,6 @@ func (c *Command) Execute(update telegram.Update) error {
 		}
 	}
 
-	thinkingText := c.L("ask.thinking", nil)
-	botMessageID, err := c.sendOrEditMessage(chatID, messageID, editedMessage, thinkingText, nil)
-	if err != nil {
-		c.Logger.WithError(err).Error("Failed to send thinking message")
-		return err
-	}
-
 	uniqueImageUrls := make(map[string]bool)
 	for _, url := range currentContent.ImageURLs {
 		uniqueImageUrls[url] = true
@@ -728,6 +722,90 @@ func (c *Command) Execute(update telegram.Update) error {
 	}
 
 	currentContent.Media = currentContent.FilterMedia(c.args.HandleImages, c.args.HandleAudio, c.args.HandleFiles)
+
+	// Create timeout context for AI calls (preprocessing + main request)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+
+	// --- Send thinking message before any processing ---
+	thinkingText := c.L("ask.thinking", nil)
+	botMessageID, err := c.sendOrEditMessage(chatID, messageID, editedMessage, thinkingText, nil)
+	if err != nil {
+		c.Logger.WithError(err).Error("Failed to send thinking message")
+		return err
+	}
+
+	// --- Preprocess images with multimodal model if enabled ---
+	// This will convert images to text description and remove them from media
+	// so UseMultimodalAuto won't trigger and main model will be used
+	preprocessedImageCount := 0
+	if c.cmdCfg.Images.PreprocessWithMultimodal && len(currentContent.GetImagesMedia()) > 0 {
+		multimodalModelName := c.Cfg.AI().MultimodalModel
+		if multimodalModelName == "" {
+			c.Logger.Warn("Images.PreprocessWithMultimodal is enabled but AI.MultimodalModel is not set")
+		} else {
+			multiModel, err := c.ai.GetFormattedModel(ctx, multimodalModelName, "")
+			if err != nil {
+				c.Logger.WithError(err).Error("Failed to get multimodal model for image preprocessing")
+			} else {
+				preprocessPrompt := c.cmdCfg.Images.PreprocessPrompt
+				if preprocessPrompt == "" {
+					preprocessPrompt = "Describe this image in detail"
+				}
+
+				// Save image count before removing them from media
+				preprocessedImageCount = len(currentContent.GetImagesMedia())
+
+				c.Logger.WithFields(logger.Fields{
+					"image_count": preprocessedImageCount,
+					"model":       multiModel.FullName(),
+				}).Info("Preprocessing images with multimodal model")
+
+				// Send images to multimodal model for description
+				preprocessMessages := []ai.Message{
+					{
+						Role:    ai.RoleUser,
+						Text:    preprocessPrompt,
+						Content: currentContent.GetImagesMedia(),
+					},
+				}
+
+				desc, _, _, _, usage, _, _, err := c.Ask(
+					ctx,
+					preprocessMessages,
+					nil,
+					multiModel,
+					"",
+					chatID,
+					false,
+					ai.ModelParams{},
+				)
+
+				if err != nil {
+					c.Logger.WithError(err).Error("Failed to preprocess images with multimodal model")
+				} else {
+					// Add image description to the text
+					imageDesc := fmt.Sprintf("\n\n[Image description: %s]", desc)
+					currentContent.Text += imageDesc
+
+					// Save preprocessing usage
+					if usage != nil {
+						preprocessUsage = NewMetadataUsageFrom(usage)
+					}
+
+					c.Logger.WithFields(logger.Fields{
+						"description": desc,
+						"tokens":      preprocessUsage,
+					}).Info("Image preprocessing completed")
+
+					c.Logger.WithField("image_count", preprocessedImageCount).Info("Removing preprocessed images from media")
+
+					// Remove images from media so they won't be sent to the main model
+					currentContent.Media = currentContent.FilterMedia(false, c.args.HandleAudio, c.args.HandleFiles)
+				}
+			}
+		}
+	}
 
 	if c.args.Tools != "" {
 		toolsList := []string{}
@@ -787,8 +865,7 @@ func (c *Command) Execute(update telegram.Update) error {
 	}
 
 	// --- Call AI ---
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
-	defer cancel()
+	// Note: ctx is already created earlier with timeout
 
 	messages := c.buildPromptWithHistory(model, currentContent, c.args, false)
 	logMessages := c.Logger.WithFields(logger.Fields{
@@ -911,6 +988,14 @@ func (c *Command) Execute(update telegram.Update) error {
 		for _, media := range currentContent.GetImagesMedia() {
 			response.Context.AddImageURL(media.ImageURL.URL)
 		}
+	}
+	// Add info about preprocessed images
+	if preprocessedImageCount > 0 {
+		for i := 0; i < preprocessedImageCount; i++ {
+			response.Context.AddImageURL("preprocessed")
+		}
+	}
+	if len(currentContent.Media) > 0 {
 		for _, media := range currentContent.GetFilesMedia() {
 			response.Context.AddFile(media.File.Filename)
 		}
@@ -948,6 +1033,12 @@ func (c *Command) Execute(update telegram.Update) error {
 
 	provider, _ := c.ai.GetProvider(model.Provider)
 	currencyConfig := c.Cfg.Currency()
+
+	// Add preprocessing usage to total
+	if preprocessUsage != nil {
+		totalUsage.Add(preprocessUsage)
+	}
+
 	// Set metadata
 	response.Metadata = NewMetadata(
 		model,

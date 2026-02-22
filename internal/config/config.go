@@ -146,9 +146,11 @@ func Load() (*Config, error) {
 		"commands.ask.audio.max_size":                       2000,    // 2mb
 		"commands.ask.audio.max_duration":                   60 * 10, // 10 min
 		"commands.ask.files.enabled":                        true,
-		"commands.ask.images.enabled":                       true,
-		"commands.ask.images.max":                           5,
-		"commands.ask.images.lifetime":                      0 * time.Minute,
+		"commands.ask.images.enabled":                        true,
+		"commands.ask.images.max":                            5,
+		"commands.ask.images.lifetime":                       0 * time.Minute,
+		"commands.ask.images.preprocess_with_multimodal":     false,
+		"commands.ask.images.preprocess_prompt":              "Describe this image in detail",
 		"commands.ask.tools.enabled":                        true,
 		"commands.ask.tools.auto_run":                       false,
 		"commands.ask.tools.max_iterations":                 2,
@@ -227,9 +229,11 @@ func (c *Config) GetAskCommandConfig() *AskCommandConfig {
 		GenerateTitleWithAI: c.k.Bool("commands.ask.generate_title_with_ai"),
 		MaxContextTurns:     c.k.Int("commands.ask.max_context_turns"),
 		Images: askImagesOptions{
-			Enabled:  c.k.Bool("commands.ask.images.enabled"),
-			Max:      c.k.Int("commands.ask.images.max"),
-			Lifetime: c.k.Duration("commands.ask.images.lifetime"),
+			Enabled:                  c.k.Bool("commands.ask.images.enabled"),
+			Max:                      c.k.Int("commands.ask.images.max"),
+			Lifetime:                 c.k.Duration("commands.ask.images.lifetime"),
+			PreprocessWithMultimodal: c.k.Bool("commands.ask.images.preprocess_with_multimodal"),
+			PreprocessPrompt:         c.k.String("commands.ask.images.preprocess_prompt"),
 		},
 		Audio: askAudioOptions{
 			Enabled:      c.k.Bool("commands.ask.audio.enabled"),
