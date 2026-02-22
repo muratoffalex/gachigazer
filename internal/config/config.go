@@ -27,6 +27,7 @@ const (
 	currencySymbol                  = "currency.symbol"
 	currencyPrecision               = "currency.precision"
 	httpProxy                       = "http.proxy"
+	httpNoProxy                     = "http.no_proxy"
 	aiSystemPrompt                  = "ai.system_prompt"
 	aiUseStream                     = "ai.use_stream"
 	aiLanguage                      = "ai.language"
@@ -85,6 +86,7 @@ func Load() (*Config, error) {
 		telegramTdEnabled:          false,
 		telegramSessionPath:        "tg_session.json",
 		httpProxy:                  nil,
+		httpNoProxy:                []string{"localhost", "127.0.0.1"},
 		instagramSessionPath:       "instagram_session.json",
 		databaseDsn:                "bot.db?_journal=WAL&_busy_timeout=5000&_synchronous=NORMAL&_cache=shared",
 		loggingLevel:               "info",
@@ -361,13 +363,10 @@ func (c *Config) Global() globalConfig {
 }
 
 func (c *Config) HTTP() HTTPConfig {
-	var proxy string
-	if proxyValue := c.k.Get(httpProxy); proxyValue != nil {
-		proxy = proxyValue.(string)
-	}
-
+	proxy := c.k.String(httpProxy)
 	return HTTPConfig{
-		proxy: &proxy,
+		proxy:   &proxy,
+		noProxy: c.k.Strings(httpNoProxy),
 	}
 }
 

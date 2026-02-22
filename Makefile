@@ -26,11 +26,14 @@ build-dev:
 build-release:
 	CGO_ENABLED=0 go build -ldflags="-w -s -X main.version=$(VERSION) -X main.buildTime=$(BUILD_TIME)" -trimpath -o $(OUTPUT_PATH) ./cmd/bot/main.go
 
-docker-build:
+docker-build: build-dev
 	docker build --network host -t gg -f docker/Dockerfile .
 
-docker-run:
-	docker run --rm --network host -v ./gachigazer.toml:/app/gachigazer.toml -v ./bot.db:/app/data/bot.db -v ~/.cache/go-ytdlp/:/root/.cache/go-ytdlp --name gg gg
+docker-run: docker-build
+	docker compose up
+
+docker-stop:
+	docker compose down
 
 docker-sh:
 	docker exec -it gg sh

@@ -241,6 +241,7 @@ dsn = "bot.db"
 
 [http]
 proxy = "" # http/socks
+no_proxy = ["localhost", "duckai"]
 
 [currency]
 # currency converter for openrouter spent money

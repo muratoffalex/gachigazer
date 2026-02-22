@@ -67,7 +67,7 @@ func NewContainer(cfg *config.Config) (*Container, error) {
 		Localizer: localizer,
 	}
 
-	httpCfg := network.NewDefaultHTTPClientConfig(cfg.HTTP().GetProxy())
+	httpCfg := network.NewDefaultHTTPClientConfig(cfg.HTTP())
 	container.HttpClient = network.SetupHTTPClient(httpCfg, l)
 
 	ytService := youtube.NewService(l, container.HttpClient, youtube.Config{
@@ -76,7 +76,7 @@ func NewContainer(cfg *config.Config) (*Container, error) {
 	})
 	container.YtService = &ytService
 
-	fetcherHTTPCfg := network.NewHTTPClientConfigForFetcher(cfg.HTTP().GetProxy())
+	fetcherHTTPCfg := network.NewHTTPClientConfigForFetcher(cfg.HTTP())
 	fetcherHTTPClient := network.SetupHTTPClient(fetcherHTTPCfg, l)
 	fetcherManager := fetcher.NewManager(l)
 	fetcherManager.RegisterFetcher(fetcher.NewFragranticaFetcher(l, fetcherHTTPClient))

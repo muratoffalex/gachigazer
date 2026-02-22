@@ -23,7 +23,22 @@ type CurrencyConfig struct {
 }
 
 type HTTPConfig struct {
-	proxy *string `koanf:"proxy"`
+	proxy   *string  `koanf:"proxy"`
+	noProxy []string `koanf:"no_proxy"`
+}
+
+func (c HTTPConfig) GetNoProxy() []string {
+	if len(c.noProxy) > 0 {
+		return c.noProxy
+	}
+	envNoProxy := os.Getenv("NO_PROXY")
+	if envNoProxy == "" {
+		envNoProxy = os.Getenv("no_proxy")
+	}
+	if envNoProxy != "" {
+		return strings.Split(envNoProxy, ",")
+	}
+	return nil
 }
 
 func (c HTTPConfig) GetProxy() string {
