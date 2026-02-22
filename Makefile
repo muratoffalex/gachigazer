@@ -4,12 +4,13 @@ VERSION ?= dev
 BUILD_TIME ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 OUTPUT_PATH ?= bin/gachigazer
 
-run-docker: build-dev docker-build docker-run
+run-docker: build-dev docker-build
+	docker compose up
 
 run:
 	. venv/bin/activate && \
 	pip install -r requirements.txt && \
-	go run cmd/bot/main.go
+	go run -ldflags="-X main.version=$(VERSION) -X main.buildTime=$(BUILD_TIME)" cmd/bot/main.go
 
 mock:
 	mockery
@@ -28,12 +29,3 @@ build-release:
 
 docker-build: build-dev
 	docker build --network host -t gg -f docker/Dockerfile .
-
-docker-run: docker-build
-	docker compose up
-
-docker-stop:
-	docker compose down
-
-docker-sh:
-	docker exec -it gg sh
