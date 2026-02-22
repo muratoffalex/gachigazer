@@ -63,6 +63,46 @@ func escapeMarkdown(text string, ignoreChars ...string) string {
 	return escaped
 }
 
+// HandleCallback handles inline buttons for the random command
+func (c *Command) HandleCallback(callbackData string, update telegram.Update) error {
+	parts := strings.SplitN(callbackData, " ", 2)
+	if len(parts) < 2 {
+		return fmt.Errorf("invalid callback data format: %s", callbackData)
+	}
+
+	actionData := strings.SplitN(parts[1], ":", 2)
+	if len(actionData) < 2 {
+		return fmt.Errorf("invalid action data format: %s", parts[1])
+	}
+
+	action := actionData[0]
+	data := actionData[1]
+
+	msg := update.CallbackQuery.Message
+
+	switch action {
+	case "tag", "next":
+		// Both buttons do the same thing - request a post by tags
+		// Form an artificial update to execute the command
+		update.Message = &telegram.MessageOriginal{
+			MessageID: msg.MessageID,
+			From:      update.CallbackQuery.From,
+			Chat:      msg.Chat,
+			Text:      "/r " + data,
+			Entities: []telegram.MessageEntity{
+				{
+					Type:   "bot_command",
+					Offset: 0,
+					Length: 2, // "/r"
+				},
+			},
+		}
+		return c.Execute(update)
+	default:
+		return fmt.Errorf("unknown callback action: %s", action)
+	}
+}
+
 func (c *Command) Execute(update telegram.Update) error {
 	if !update.Message.IsCommand() {
 		return fmt.Errorf("not a command")
@@ -178,12 +218,12 @@ func (c *Command) Execute(update telegram.Update) error {
 				var row []telegram.InlineKeyboardButton
 				row = append(row, telegram.NewInlineKeyboardButtonData(
 					"#"+similarTagsFound[i],
-					fmt.Sprintf("r %s", similarTagsFound[i]),
+					fmt.Sprintf("r tag:%s", similarTagsFound[i]),
 				))
 				if i+1 < len(similarTagsFound) {
 					row = append(row, telegram.NewInlineKeyboardButtonData(
 						"#"+similarTagsFound[i+1],
-						fmt.Sprintf("r %s", similarTagsFound[i+1]),
+						fmt.Sprintf("r tag:%s", similarTagsFound[i+1]),
 					))
 				}
 				buttons = append(buttons, row)
@@ -298,12 +338,12 @@ func (c *Command) Execute(update telegram.Update) error {
 		tagButtons = append(tagButtons,
 			telegram.NewInlineKeyboardButtonData(
 				"#"+cleanTag,
-				fmt.Sprintf("r %s", cleanTag),
+				fmt.Sprintf("r tag:%s", cleanTag),
 			),
 		)
 	}
 
-	nextCommand := fmt.Sprintf("r %s", strings.Join(tags, " "))
+	nextCommand := fmt.Sprintf("r next:%s", strings.Join(tags, " "))
 	if minScore > 0 {
 		nextCommand += fmt.Sprintf(" s>%d", minScore)
 	}

@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"maps"
 	"net/http"
 	"strings"
@@ -167,7 +166,7 @@ func (c *OpenAICompatibleClient) AskStream(
 			line, err := reader.ReadBytes('\n')
 			if err != nil {
 				if err != io.EOF {
-					log.Printf("stream read error: %v", err)
+					c.logger.Warn(fmt.Sprintf("stream read error: %v", err))
 				}
 				return
 			}

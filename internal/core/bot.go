@@ -6,13 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/muratoffalex/gachigazer/internal/commands"
 	"github.com/muratoffalex/gachigazer/internal/commands/ask"
 	"github.com/muratoffalex/gachigazer/internal/commands/instagram"
-	"github.com/muratoffalex/gachigazer/internal/commands/random"
 	"github.com/muratoffalex/gachigazer/internal/config"
 	"github.com/muratoffalex/gachigazer/internal/database"
 	"github.com/muratoffalex/gachigazer/internal/fetcher"
@@ -72,51 +70,25 @@ func (b *Bot) Start(ctx context.Context) error {
 				params := strings.Split(callbackQuery.Data, " ")
 				commandName := params[0]
 				if cmd, exists := b.commands[commandName]; exists {
-					args := strings.Split(params[1], ":")
-					switch commandName {
-					case ask.CommandName:
-						if args[0] == "retry" {
-							messageIDArg := args[1]
-							messageID, err := strconv.ParseInt(messageIDArg, 10, 64)
-							if err != nil {
-								b.logger.WithError(err).WithField("arg", messageIDArg).Error("Parse int from message ID failed")
+					// Check if command implements CallbackHandler interface
+					if callbackHandler, ok := cmd.(commands.CallbackHandler); ok {
+						go func(handler commands.CallbackHandler, update telegram.Update) {
+							if err := handler.HandleCallback(callbackQuery.Data, update); err != nil {
+								b.logger.WithError(err).Error("Failed to handle callback")
 								b.sendErrorMessage(err, chatID, callbackQuery.Message.MessageID)
-								continue
 							}
-							dbMessage, err := b.db.GetMessage(chatID, int(messageID))
-							if err != nil {
-								b.logger.WithError(err).WithFields(logger.Fields{
-									"message_id": messageID,
-									"chat_id":    chatID,
-								}).Error("Get message from DB failed")
-								b.sendErrorMessage(err, chatID, callbackQuery.Message.MessageID)
-								continue
-							}
-							dbMessage.CallbackQuery = update.CallbackQuery
-							update = *dbMessage
-						}
-					case random.CommandName:
-						update.Message = &telegram.MessageOriginal{
-							MessageID: callbackQuery.Message.MessageID,
-							From:      callbackQuery.From,
-							Chat:      callbackQuery.Message.Chat,
-							Text:      "/" + callbackQuery.Data,
-							Entities: []telegram.MessageEntity{
-								{
-									Type:   "bot_command",
-									Offset: 0,
-									Length: len(strings.Split(callbackQuery.Data, " ")[0]) + 1,
-								},
-							},
-						}
-					}
+						}(callbackHandler, update)
+					} else {
+						// Command doesn't implement CallbackHandler - log and ignore
+						b.logger.WithField("command", commandName).Warn("Command doesn't implement CallbackHandler")
 
-					go func(cmd commands.Command, update telegram.Update) {
-						if err := cmd.Handle(update); err != nil {
-							b.logger.WithError(err).Error("Failed to handle command from callback")
-							b.sendErrorMessage(err, chatID, callbackQuery.Message.MessageID)
+						// Answer callback to remove loading state
+						callback := telegram.NewCallback(callbackQuery.ID, "")
+						if _, err := b.tg.Request(&callback); err != nil {
+							b.logger.WithError(err).Error("Failed to answer callback query")
 						}
-					}(cmd, update)
+						continue
+					}
 
 					callback := telegram.NewCallback(callbackQuery.ID, "")
 					if _, err := b.tg.Request(&callback); err != nil {

@@ -46,6 +46,10 @@ other = "To rerun the tool, reply to the previous message and write /tools or `$
 other = "Running tools: {{.Tools}}"
 [ask.retryButtonText]
 other = "🔄 Retry"
+[ask.cancelButton]
+other = "❌ Cancel"
+[ask.cancelled]
+other = "❌ Request cancelled"
 [ask.info.metadataNotFound]
 other = "No AI metadata found for this message"
 [ask.info.replyToAIResponse]
