@@ -151,7 +151,7 @@ func Load() (*Config, error) {
 		"commands.ask.images.lifetime":                      0 * time.Minute,
 		"commands.ask.tools.enabled":                        true,
 		"commands.ask.tools.auto_run":                       false,
-		"commands.ask.tools.max_iterations":                 1,
+		"commands.ask.tools.max_iterations":                 2,
 		"commands.ask.queue.enabled":                        true,
 		"commands.ask.queue.timeout":                        2 * time.Minute,
 		"commands.ask.queue.max_retries":                    0,

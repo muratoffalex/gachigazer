@@ -27,8 +27,8 @@ func (t Tools) Search(
 	links := []string{}
 	for i, result := range results {
 		links = append(links, result.Href)
-		list = append(list, fmt.Sprintf("%d: Title: %s\nDescription: %s\nLink: %s", i+1, result.Title, result.Body, result.Href))
+		list = append(list, fmt.Sprintf("%d. Title: %s\nDescription: %s\nLink: %s", i+1, result.Title, result.Body, result.Href))
 	}
 
-	return fmt.Sprintf("Found results: %d\n%s", len(results), strings.Join(list, "\n")), links, nil
+	return fmt.Sprintf("Found %d results. To get detailed content from a specific result, use the fetch_url tool with one of the links below.\n\n%s", len(results), strings.Join(list, "\n\n")), links, nil
 }

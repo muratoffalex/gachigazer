@@ -119,13 +119,13 @@ var AllTools = map[string]ai.Tool{
 		Type: "function",
 		Function: ai.ToolFunction{
 			Name:        ToolSearch,
-			Description: "Search with duckduckgo, use when need more relevant information.",
+			Description: "Search with duckduckgo. IMPORTANT: Use a SINGLE search query that combines all relevant keywords. Do NOT make multiple separate searches for related topics. After search, use fetch_url to get content from relevant results.",
 			Parameters: ai.Parameters{
 				Type: "object",
 				Properties: map[string]ai.Property{
-					"query":       {Type: "string", Description: "Search query"},
-					"max_results": {Type: "integer", Description: "Max search results. Min: 3, max: 10"},
-					"time_limit":  {Type: "string", Enum: []string{"", "d", "w", "m", "y"}, Description: "Time range for search results: 'd' (last 24h), 'w' (last week), 'm' (last month), 'y' (last year). Leave empty for all time."},
+					"query":       {Type: "string", Description: "Single search query combining all keywords. Example: 'Maduro arrest drug trafficking' instead of separate searches"},
+					"max_results": {Type: "integer", Description: "Number of results (3-5 is usually enough). Use 3 for most queries, max 10 for comprehensive research"},
+					"time_limit":  {Type: "string", Enum: []string{"", "d", "w", "m", "y"}, Description: "RARELY NEEDED. Only use if user explicitly asks for recent news (e.g., 'latest', 'today', 'this week'). Leave empty for all time - this is the default and preferred option."},
 				},
 				Required: []string{"query", "max_results"},
 			},
@@ -135,7 +135,7 @@ var AllTools = map[string]ai.Tool{
 		Type: "function",
 		Function: ai.ToolFunction{
 			Name:        ToolFetchURL,
-			Description: `Fetch full content from URL. Use when you need more info from URL (e.g. after search) or if user asks.`,
+			Description: `Fetch full content from URL. Use after search to get detailed content from specific search results, or when user provides a URL to analyze.`,
 			Parameters: ai.Parameters{
 				Type: "object",
 				Properties: map[string]ai.Property{

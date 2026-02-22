@@ -594,7 +594,7 @@ func extractMessageText(msg *telegram.MessageOriginal, isCurrentMessage bool) (s
 	}
 
 	if text == "" {
-		return "", "", nil
+		return "", "", map[string]string{}
 	}
 
 	// For history messages, remove any command prefix
@@ -614,7 +614,7 @@ func extractMessageText(msg *telegram.MessageOriginal, isCurrentMessage bool) (s
 		return cleanedText, command, args
 	}
 
-	return strings.TrimSpace(text), "", nil
+	return strings.TrimSpace(text), "", map[string]string{}
 }
 
 func IsCommand(text string) bool {

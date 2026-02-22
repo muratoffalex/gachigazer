@@ -1470,6 +1470,25 @@ Technical notes:
 6. Use tools with parameters in English`
 
 	if c.cmdCfg.Tools.Enabled && len(currentContent.Tools) == 0 && len(tools.AvailableTools(c.cmdCfg.Tools.Allowed, c.cmdCfg.Tools.Excluded)) > 0 {
+		runToolsInstruction := ""
+		if !c.cmdCfg.Tools.AutoRun {
+			runToolsInstruction = `
+How to activate tools:
+1. Reply to this message with "$tools" or "/tools"
+2. OR use the activation button below
+
+Tool format:
+**name@N** {parameters} (one-line JSON)
+
+Critical tool format rules:
+1. Place activation instructions before or after tools
+2. Show complete tool syntax
+3. Always number tools when multiple tools are provided, number must be part of the tool name (e.g., name@1)
+4. Always include both text and button options
+5. Tools always in correct format (one-line without json tags)
+`
+		}
+
 		defaultSystemInstructions += fmt.Sprintf(`
 [Tool Integration Protocol]
 Available functions:
@@ -1484,14 +1503,7 @@ Valid triggers:
 - Question requires live/current data
 - Facts are outside my training cutoff
 - Clear user instruction
-
-How to activate tools:
-1. Reply to this message with "$tools" or "/tools"
-2. OR use the activation button below
-
-Tool format:
-**name@N** {parameters} (one-line JSON)
-
+%s
 Format examples:
 • Friendly style:
 "I can help with both! To activate, please:
@@ -1508,12 +1520,7 @@ Format examples:
 **fetch_url@2** {"url":"https://reports.example.com/Q3"}"
 
 Critical format rules:
-1. Maintain conversation style
-2. Place activation instructions before or after tools
-3. Show complete tool syntax
-4. Always number tools when multiple tools are provided, number must be part of the tool name (e.g., name@1)
-5. Always include both text and button options
-6. Tools always in correct format (one-line without json tags)`, tools.AvailableToolsText(c.cmdCfg.Tools.Allowed, c.cmdCfg.Tools.Excluded))
+1. Maintain conversation style`, tools.AvailableToolsText(c.cmdCfg.Tools.Allowed, c.cmdCfg.Tools.Excluded), runToolsInstruction)
 	}
 
 	systemInstructions := `You are Gachigazer⭐, a Telegram AI assistant. Current date: {{date}}, time: {{time}}.
@@ -2504,7 +2511,6 @@ func (c *Command) handleRequest(
 	}
 
 	isStream := *params.Stream
-
 	for iteration := range maxIterations {
 		var annotations []ai.AnnotationContent
 
@@ -2525,11 +2531,9 @@ func (c *Command) handleRequest(
 				currentContent.Tools = nil
 				requestTools = nil
 				messages = c.buildPromptWithHistory(model, currentContent, c.args, true)
-				isStream = *params.Stream
 			}
 		} else if len(requestTools) > 0 {
 			currentModel = toolsModel
-			isStream = false
 		}
 		if isStream {
 			response.Content, response.Reasoning, tools, usage, annotations, params, err = c.AskStream(
@@ -2610,11 +2614,16 @@ func (c *Command) handleRequest(
 			response.Context.AddTool(tool.Function.Name)
 		}
 
+		toolsNames := make([]string, len(tools))
+		for i, toolCall := range tools {
+			toolsNames[i] = toolCall.Function.Name
+		}
+
 		tgMsg := telegram.NewEditMessageText(
 			chatID,
 			sentMsgID,
 			c.L("ask.runningToolsText", map[string]any{
-				"Tools": strings.Join(response.Context.Tools, ", "),
+				"Tools": strings.Join(toolsNames, ", "),
 			}),
 		)
 		c.Tg.Send(tgMsg)
