@@ -14,7 +14,7 @@ require (
 	github.com/pressly/goose/v3 v3.26.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/net v0.50.0
+	golang.org/x/net v0.51.0
 	modernc.org/sqlite v1.45.0
 )
 
