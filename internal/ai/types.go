@@ -427,7 +427,7 @@ type StreamResponse struct {
 		} `json:"delta"`
 		FinishReason string `json:"finish_reason"`
 	} `json:"choices"`
-	Usage ModelUsage `json:"usage,omitzero"`
+	Usage *ModelUsage `json:"usage,omitzero"`
 }
 
 type ModelPricing struct {

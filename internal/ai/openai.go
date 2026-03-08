@@ -196,6 +196,7 @@ func (c *OpenAICompatibleClient) AskStream(
 				continue
 			}
 
+			var chunk Chunk
 			if len(event.Choices) > 0 {
 				delta := event.Choices[0].Delta
 
@@ -224,9 +225,8 @@ func (c *OpenAICompatibleClient) AskStream(
 					}
 				}
 
-				chunk := Chunk{
+				chunk = Chunk{
 					Content:     delta.Content,
-					Usage:       &event.Usage,
 					Annotations: delta.Annotations,
 				}
 
@@ -251,8 +251,12 @@ func (c *OpenAICompatibleClient) AskStream(
 				}
 
 				chunk.Reasoning = reasoning
-				chunkCh <- chunk
+			} else if event.Usage != nil {
+				chunk = Chunk{
+					Usage: event.Usage,
+				}
 			}
+			chunkCh <- chunk
 		}
 	}()
 

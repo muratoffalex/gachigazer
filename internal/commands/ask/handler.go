@@ -2666,6 +2666,7 @@ func (c *Command) handleRequest(
 			)
 			return nil, nil, err
 		}
+		c.Logger.Debug("Usage info: %v", usage)
 		usageInfo := NewMetadataUsageFrom(usage)
 		totalUsage.Add(usageInfo)
 
