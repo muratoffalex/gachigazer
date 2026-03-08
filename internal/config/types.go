@@ -23,13 +23,13 @@ type CurrencyConfig struct {
 }
 
 type HTTPConfig struct {
-	proxy   *string  `koanf:"proxy"`
-	noProxy []string `koanf:"no_proxy"`
+	Proxy   *string  `koanf:"proxy"`
+	NoProxy []string `koanf:"no_proxy"`
 }
 
 func (c HTTPConfig) GetNoProxy() []string {
-	if len(c.noProxy) > 0 {
-		return c.noProxy
+	if len(c.NoProxy) > 0 {
+		return c.NoProxy
 	}
 	envNoProxy := os.Getenv("NO_PROXY")
 	if envNoProxy == "" {
@@ -42,8 +42,8 @@ func (c HTTPConfig) GetNoProxy() []string {
 }
 
 func (c HTTPConfig) GetProxy() string {
-	if c.proxy != nil && *c.proxy != "" {
-		return *c.proxy
+	if c.Proxy != nil && *c.Proxy != "" {
+		return *c.Proxy
 	}
 	if proxyURL := os.Getenv("HTTPS_PROXY"); proxyURL != "" {
 		return proxyURL
@@ -548,11 +548,11 @@ type askDisplayOptions struct {
 }
 
 type askImagesOptions struct {
-	Enabled                bool          `koanf:"enabled"`
-	Max                    int           `koanf:"max"`
-	Lifetime               time.Duration `koanf:"lifetime"`
-	PreprocessWithMultimodal bool        `koanf:"preprocess_with_multimodal"`
-	PreprocessPrompt       string        `koanf:"preprocess_prompt"`
+	Enabled                    bool          `koanf:"enabled"`
+	Max                        int           `koanf:"max"`
+	Lifetime                   time.Duration `koanf:"lifetime"`
+	PreprocessWithMultimodal bool            `koanf:"preprocess_with_multimodal"`
+	PreprocessPrompt           string        `koanf:"preprocess_prompt"`
 }
 
 type askAudioOptions struct {

@@ -146,11 +146,11 @@ func Load() (*Config, error) {
 		"commands.ask.audio.max_size":                       2000,    // 2mb
 		"commands.ask.audio.max_duration":                   60 * 10, // 10 min
 		"commands.ask.files.enabled":                        true,
-		"commands.ask.images.enabled":                        true,
-		"commands.ask.images.max":                            5,
-		"commands.ask.images.lifetime":                       0 * time.Minute,
-		"commands.ask.images.preprocess_with_multimodal":     false,
-		"commands.ask.images.preprocess_prompt":              "Describe this image in detail",
+		"commands.ask.images.enabled":                       true,
+		"commands.ask.images.max":                           5,
+		"commands.ask.images.lifetime":                      0 * time.Minute,
+		"commands.ask.images.preprocess_with_multimodal":    false,
+		"commands.ask.images.preprocess_prompt":             "Describe this image in detail",
 		"commands.ask.tools.enabled":                        true,
 		"commands.ask.tools.auto_run":                       false,
 		"commands.ask.tools.max_iterations":                 2,
@@ -369,8 +369,8 @@ func (c *Config) Global() globalConfig {
 func (c *Config) HTTP() HTTPConfig {
 	proxy := c.k.String(httpProxy)
 	return HTTPConfig{
-		proxy:   &proxy,
-		noProxy: c.k.Strings(httpNoProxy),
+		Proxy:   &proxy,
+		NoProxy: c.k.Strings(httpNoProxy),
 	}
 }
 
