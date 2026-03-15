@@ -7,7 +7,7 @@ require (
 	github.com/OvyFlash/telegram-bot-api v0.0.0-20260219140839-20ca18a350af
 	github.com/PuerkitoBio/goquery v1.11.0
 	github.com/knadh/koanf v1.5.0
-	github.com/lrstanley/go-ytdlp v1.3.3
+	github.com/lrstanley/go-ytdlp v1.3.4
 	github.com/nicksnyder/go-i18n/v2 v2.6.1
 	github.com/pressly/goose/v3 v3.27.0
 	github.com/sirupsen/logrus v1.9.4
