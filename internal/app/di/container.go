@@ -139,6 +139,7 @@ func NewContainer(cfg *config.Config) (*Container, error) {
 		l.WithError(err).Fatal("Bot API client initialization error")
 	}
 	l.Info("Bot API initialized")
+	api.Client = container.HttpClient
 
 	markdownProcessor := markdown.NewMarkdownProcessor(cfg.Telegram().TelegramifyScriptPath, l)
 	botClient := telegram.NewBotClient(api, l, *markdownProcessor)

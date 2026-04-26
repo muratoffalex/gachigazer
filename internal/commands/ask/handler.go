@@ -1558,11 +1558,13 @@ Technical notes:
 3. [forwarded from] indicates third-party content - maintain original context
 4. IDs in parentheses are for tracking only - never mention them
 5. Keep responses under 4000 characters (Telegram limit)
-6. Use tools with parameters in English`
+6. Use tools with parameters in English
+7. Maintain conversation style
+`
 
 	if c.cmdCfg.Tools.Enabled && len(currentContent.Tools) == 0 && len(tools.AvailableTools(c.cmdCfg.Tools.Allowed, c.cmdCfg.Tools.Excluded)) > 0 {
 		runToolsInstruction := ""
-		if !c.cmdCfg.Tools.AutoRun {
+		if !c.cmdCfg.Tools.AutoRun || !model.SupportsTools() {
 			runToolsInstruction = `
 How to activate tools:
 1. Reply to this message with "$tools" or "/tools"
@@ -1578,9 +1580,8 @@ Critical tool format rules:
 4. Always include both text and button options
 5. Tools always in correct format (one-line without json tags)
 `
-		}
 
-		defaultSystemInstructions += fmt.Sprintf(`
+			defaultSystemInstructions += fmt.Sprintf(`
 [Tool Integration Protocol]
 Available functions:
 %s
@@ -1609,9 +1610,8 @@ Format examples:
 
 **search@1** {"query":"market trends 2025","max_results":5}"
 **fetch_url@2** {"url":"https://reports.example.com/Q3"}"
-
-Critical format rules:
-1. Maintain conversation style`, tools.AvailableToolsText(c.cmdCfg.Tools.Allowed, c.cmdCfg.Tools.Excluded), runToolsInstruction)
+`, tools.AvailableToolsText(c.cmdCfg.Tools.Allowed, c.cmdCfg.Tools.Excluded), runToolsInstruction)
+		}
 	}
 
 	systemInstructions := `You are Gachigazer⭐, a Telegram AI assistant. Current date: {{date}}, time: {{time}}.
@@ -2666,7 +2666,7 @@ func (c *Command) handleRequest(
 			)
 			return nil, nil, err
 		}
-		c.Logger.Debug("Usage info: %v", usage)
+		c.Logger.Debug(fmt.Sprintf("Usage info: %v", usage))
 		usageInfo := NewMetadataUsageFrom(usage)
 		totalUsage.Add(usageInfo)
 
