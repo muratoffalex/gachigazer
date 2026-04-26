@@ -2235,7 +2235,7 @@ func (c *Command) AskStream(
 			if !hasContent && time.Since(lastUpdateReasoning) > reasoningUpdateThreshold && reasoningBuffer.Len() > 3 {
 				msg := telegram.NewEditMessageText(
 					chatID,
-					int(sentMsgID),
+					sentMsgID,
 					c.L("ask.reasoningContent", map[string]any{
 						"Reasoning": reasoningBuffer.String(),
 					}),

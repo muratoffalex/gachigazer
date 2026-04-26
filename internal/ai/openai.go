@@ -251,7 +251,9 @@ func (c *OpenAICompatibleClient) AskStream(
 				}
 
 				chunk.Reasoning = reasoning
-			} else if event.Usage != nil {
+			}
+
+			if event.Usage != nil {
 				chunk = Chunk{
 					Usage: event.Usage,
 				}
