@@ -2624,7 +2624,9 @@ func (c *Command) handleRequest(
 				messages = c.buildPromptWithHistory(model, currentContent, c.args, true)
 			}
 		} else if len(requestTools) > 0 {
-			currentModel = toolsModel
+			if !c.cmdCfg.Tools.AutoRun {
+				currentModel = toolsModel
+			}
 		}
 		if isStream {
 			response.Content, response.Reasoning, tools, usage, annotations, params, err = c.AskStream(
