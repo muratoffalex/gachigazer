@@ -40,7 +40,7 @@ require (
 	github.com/go-faster/yaml v0.4.6 // indirect
 	github.com/gotd/ige v0.2.2 // indirect
 	github.com/gotd/neo v0.1.5 // indirect
-	github.com/gotd/td v0.145.0
+	github.com/gotd/td v0.145.1
 	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/ogen-go/ogen v1.20.3 // indirect
