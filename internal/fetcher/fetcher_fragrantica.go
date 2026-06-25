@@ -226,28 +226,22 @@ func (f FragranticaFetcher) Handle(request Request) (Response, error) {
 	title, _ := doc.Find("meta[property='og:title']").First().Attr("content")
 	response.title = title
 
-	body := doc.Find("div#toptop").Next()
-
 	// accords
-	var accords []string
-	body.Find("div.accord-box").Each(func(i int, s *goquery.Selection) {
-		accordText := s.Find("div.accord-bar").Text()
-		if accordText != "" {
-			accords = append(accords, strings.TrimSpace(accordText))
-		}
-	})
-	response.accords = accords
+	response.accords = f.parseAccords(doc)
 
 	// rating
 	rating := fragranticaRating{}
-	ratingContainer := body.Find("p.info-note").First()
-	rating.current = ratingContainer.Find("span[itemprop='ratingValue']").First().Text()
-	rating.best = ratingContainer.Find("span[itemprop='bestRating']").First().Text()
-	rating.votesCount = ratingContainer.Find("span[itemprop='ratingCount']").First().Text()
+	ratingContainer := doc.Find("[itemprop='aggregateRating']").First()
+	if ratingContainer.Length() == 0 {
+		ratingContainer = doc.Find("p.info-note").First()
+	}
+	rating.current = strings.TrimSpace(ratingContainer.Find("span[itemprop='ratingValue']").First().Text())
+	rating.best = strings.TrimSpace(ratingContainer.Find("span[itemprop='bestRating']").First().Text())
+	rating.votesCount = strings.TrimSpace(ratingContainer.Find("span[itemprop='ratingCount']").First().Text())
 	response.rating = rating
 
 	// description
-	response.description = strings.TrimSpace(body.Find("div[itemprop='description'] p").First().Text())
+	response.description = strings.TrimSpace(doc.Find("div[itemprop='description'] p").First().Text())
 
 	// Pyramid
 	pyramid := fragranticaPyramid{}
@@ -268,6 +262,22 @@ func (f FragranticaFetcher) Handle(request Request) (Response, error) {
 	response.pyramid = pyramid
 
 	// Reviews
+	doc.Find("[itemprop='review']").Each(func(i int, s *goquery.Selection) {
+		if len(response.reviews) >= maxReviews {
+			return
+		}
+
+		review := fragranticaReview{}
+		review.id, _ = s.Attr("id")
+		review.author = strings.TrimSpace(s.Find("[itemprop='author'] meta[itemprop='name']").First().AttrOr("content", ""))
+		if review.author == "" {
+			review.author = strings.TrimSpace(s.Find(".idLinkify").Last().Text())
+		}
+		review.date = strings.TrimSpace(s.Find("span[itemprop='datePublished']").First().Text())
+		review.text = f.selectionTextWithBreaks(s.Find("div[itemprop='reviewBody']").First())
+
+		response.reviews = append(response.reviews, review)
+	})
 	doc.Find("div.fragrance-review-box").Each(func(i int, s *goquery.Selection) {
 		if len(response.reviews) >= maxReviews {
 			return
@@ -275,17 +285,29 @@ func (f FragranticaFetcher) Handle(request Request) (Response, error) {
 
 		review := fragranticaReview{}
 		review.id, _ = s.Attr("id")
-		review.author = s.Find("b.idLinkify").First().Text()
-		review.date = s.Find("span[itemprop='datePublished']").First().Text()
-		review.text = s.Find("div[itemprop='reviewBody'] p").First().Text()
+		review.author = strings.TrimSpace(s.Find("b.idLinkify").First().Text())
+		review.date = strings.TrimSpace(s.Find("span[itemprop='datePublished']").First().Text())
+		review.text = f.selectionTextWithBreaks(s.Find("div[itemprop='reviewBody']").First())
 
 		response.reviews = append(response.reviews, review)
 	})
 
 	// Similar perfumes
 	similar := []fragranticaSimilar{}
-	similarContainer := doc.Find("div.carousel").First()
-	similarContainer.Find("div.carousel-cell").Each(func(i int, s *goquery.Selection) {
+	similarContainer := doc.Find(".perfume-carousel-scroll").First()
+	similarContainer.Find("a.tw-carousel-perfume-card").Each(func(i int, s *goquery.Selection) {
+		if len(similar) >= 5 {
+			return
+		}
+		similarItem := fragranticaSimilar{}
+		similarItem.name = strings.TrimPrefix(strings.TrimSpace(s.Find("img").First().AttrOr("alt", "")), "perfume ")
+		if similarItem.name == "" {
+			similarItem.name = strings.TrimSpace(s.Find("p").Last().Text())
+		}
+		similarItem.url, _ = s.Attr("href")
+		similar = append(similar, similarItem)
+	})
+	doc.Find("div.carousel div.carousel-cell").Each(func(i int, s *goquery.Selection) {
 		if len(similar) >= 5 {
 			return
 		}
@@ -304,6 +326,22 @@ func (f FragranticaFetcher) Handle(request Request) (Response, error) {
 
 func (f FragranticaFetcher) parsePyramidNotes(s *goquery.Selection) []fragranticaNote {
 	var notes []fragranticaNote
+	s.Find("a.pyramid-note-link").Each(func(i int, noteDiv *goquery.Selection) {
+		note := fragranticaNote{}
+		note.name = strings.TrimSpace(noteDiv.Find(".pyramid-note-label").First().Text())
+		if note.name == "" {
+			note.name = strings.TrimSpace(noteDiv.Find("img").First().AttrOr("alt", ""))
+		}
+		note.link, _ = noteDiv.Attr("href")
+		note.image, _ = noteDiv.Find("img").First().Attr("src")
+		if note.name != "" {
+			notes = append(notes, note)
+		}
+	})
+	if len(notes) > 0 {
+		return notes
+	}
+
 	s.Children().Find("div").Each(func(i int, noteDiv *goquery.Selection) {
 		note := fragranticaNote{}
 		note.name = strings.TrimSpace(noteDiv.Find("div").Text())
@@ -314,6 +352,58 @@ func (f FragranticaFetcher) parsePyramidNotes(s *goquery.Selection) []fragrantic
 		}
 	})
 	return notes
+}
+
+func (f FragranticaFetcher) parseAccords(doc *goquery.Document) []string {
+	accords := make([]string, 0)
+	doc.Find("h6").EachWithBreak(func(i int, s *goquery.Selection) bool {
+		if strings.TrimSpace(s.Text()) != "main accords" {
+			return true
+		}
+
+		s.Parent().Find("span.truncate").Each(func(i int, accord *goquery.Selection) {
+			accordText := strings.TrimSpace(accord.Text())
+			if accordText != "" && accordText != "Search by accords" {
+				accords = append(accords, accordText)
+			}
+		})
+		return false
+	})
+	if len(accords) > 0 {
+		return accords
+	}
+
+	doc.Find("div.accord-box").Each(func(i int, s *goquery.Selection) {
+		accordText := strings.TrimSpace(s.Find("div.accord-bar").Text())
+		if accordText != "" {
+			accords = append(accords, accordText)
+		}
+	})
+	return accords
+}
+
+func (f FragranticaFetcher) selectionTextWithBreaks(s *goquery.Selection) string {
+	if s.Length() == 0 {
+		return ""
+	}
+
+	cloned := s.Clone()
+	cloned.Find("br").Each(func(i int, br *goquery.Selection) {
+		br.ReplaceWithHtml("\n")
+	})
+	return normalizeMultilineText(cloned.Text())
+}
+
+func normalizeMultilineText(text string) string {
+	lines := strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n")
+	normalizedLines := make([]string, 0, len(lines))
+	for _, line := range lines {
+		normalizedLine := strings.TrimSpace(line)
+		if normalizedLine != "" {
+			normalizedLines = append(normalizedLines, normalizedLine)
+		}
+	}
+	return strings.Join(normalizedLines, "\n")
 }
 
 func (f FragranticaFetcher) getComRequest(request Request) (Request, error) {

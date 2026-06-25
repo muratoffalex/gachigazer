@@ -48,19 +48,16 @@ func TestFragranticaFetcher_Handle(t *testing.T) {
 
 	expectedText := `Title: Marshmallow Addiction Eau de Parfum Zara perfume - a fragrance for women 2023
 Description: Marshmallow Addiction Eau de Parfum by Zara is a Oriental Vanilla fragrance for women. Marshmallow Addiction Eau de Parfum was launched in 2023. Top notes are Fruits and Sunflower; middle note is Vanilla; base note is Musk.
-Rating: 3.82/5 (votes: 458)
+Rating: 3.84/5 (votes: 530)
 Accords: fruity, sweet, vanilla, musky, powdery
 Notes: Top: Fruits, Sunflower; Middle: Vanilla; Base: Musk
-Similar: Sunrise On The Red Sand Dunes Zara, Sunrise on the Red Sand Dunes Intense Zara, Ebony Wood Zara, Elegantly Tokyo Zara, Golden Decade Zara
+Similar: Sunrise On The Red Sand Dunes Zara, Elegantly Tokyo Zara, Sunrise on the Red Sand Dunes Intense Zara, Ebony Wood Zara, Fashionably London Zara
 Reviews:
+- vintagerosa (05/20/26 19:08): I tested this today and it lid really nice. I think it smells like mangos and fruity juicy sweets, it smells like solar mango should smell like. It’s not marshmallows but it it’s very sweet, very feminine and fruit juicy. I will be buying this.
 - Rianna22 (12/10/25 13:36): A beautiful scent! Smells like juicy sweet apricots!!♥️
 And as it is, it's a linear scent, do not expect big things from it.
 I regret to not buying it, even tho it's technically barely lasts more than an hour...😅
 Maybe I try to tame a 30ml bottle later, to enhance longevity with some body oil.
-- miss mills (06/18/25 11:24): I took my 11 year old niece perfume shopping at Zara for her birthday and this is the one she fell in love with. It's a sweet fruity summery delight. Not getting the marshmallow but suspect the vanilla and musk is what makes this smell gourmand rather than straight up fruit juice. Good longevity on my skin - 3-4 hrs and not too overpowering. Pretty packaging too.
-- scythess (05/12/25 17:29): Extremely fruity, the name isn't accurate at all! No marshmallow to be found. It is sweet and pleasant but doesn't last long. Summery and almost tropical. Like fruity gummy candy
-- shawnaceline (04/03/25 14:32): Smell good but it dissappeard within an hour ,so won't be buying it again
-- Dop@mine (03/29/25 10:09): I received this as a free sample with a decant order. It's fine, but definitely not for me. I probably would have liked it when I was younger though. It's simple, fruity and clean. Like everyone else, I'm mystified by the choice of name. I wonder why they chose to call it that?
 `
 
 	assert.Equal(t, expectedText, response.Content[0].Text, "Response text should match expected")
