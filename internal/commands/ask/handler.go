@@ -303,8 +303,10 @@ func (c *Command) Execute(update telegram.Update) error {
 		command = "a"
 		currentContent.Args["p"] = "help"
 	}
+	_, toolsExplicitlyRequested := currentContent.Args["tools"]
 	if !c.cmdCfg.Tools.Enabled {
 		delete(currentContent.Args, "tools")
+		toolsExplicitlyRequested = false
 	} else if _, exists := currentContent.Args["tools"]; !exists && c.cmdCfg.Tools.AutoRun {
 		currentContent.Args["tools"] = "yes"
 	}
@@ -463,7 +465,7 @@ func (c *Command) Execute(update telegram.Update) error {
 		currentContent.ConversationHistoryLength = currentContent.ContextTurnsCount()
 		currentContent.ConversationHistory = nil
 
-		if c.args.Tools != "" {
+		if toolsExplicitlyRequested {
 			if currentContent.Text == "" {
 				currentContent.Text = "Run tools from your previous message"
 			}
