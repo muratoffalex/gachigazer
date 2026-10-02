@@ -146,7 +146,7 @@ func TestSubtitleFetcher_getSubtitleURL(t *testing.T) {
 					"en": {
 						{
 							Name: stringPtr("English"),
-							URL:  "http://example.com/subtitle.srt?fmt=srt",
+							URL:  stringPtr("http://example.com/subtitle.srt?fmt=srt"),
 						},
 					},
 				},
@@ -170,7 +170,7 @@ func TestSubtitleFetcher_getSubtitleURL(t *testing.T) {
 					"en": {
 						{
 							Name: stringPtr("English"),
-							URL:  "http://example.com/subtitle.srt?fmt=srt",
+							URL:  stringPtr("http://example.com/subtitle.srt?fmt=srt"),
 						},
 					},
 				},
@@ -207,7 +207,7 @@ func TestSubtitleFetcher_getSubtitleURL(t *testing.T) {
 					"es": {
 						{
 							Name: stringPtr("Spanish"),
-							URL:  "http://example.com/subtitle.srt?fmt=srt",
+							URL:  stringPtr("http://example.com/subtitle.srt?fmt=srt"),
 						},
 					},
 				},
@@ -227,7 +227,7 @@ func TestSubtitleFetcher_getSubtitleURL(t *testing.T) {
 					"en": {
 						{
 							Name: stringPtr("English"),
-							URL:  "http://example.com/subtitle.vtt",
+							URL:  stringPtr("http://example.com/subtitle.vtt"),
 						},
 					},
 				},
@@ -251,7 +251,7 @@ func TestSubtitleFetcher_getSubtitleURL(t *testing.T) {
 					"en": {
 						{
 							Name: stringPtr("English"),
-							URL:  "",
+							URL:  stringPtr(""),
 						},
 					},
 				},
@@ -275,15 +275,15 @@ func TestSubtitleFetcher_getSubtitleURL(t *testing.T) {
 					"en": {
 						{
 							Name: stringPtr("English VTT"),
-							URL:  "http://example.com/subtitle.vtt",
+							URL:  stringPtr("http://example.com/subtitle.vtt"),
 						},
 						{
 							Name: stringPtr("English SRT"),
-							URL:  "http://example.com/subtitle.srt?fmt=srt",
+							URL:  stringPtr("http://example.com/subtitle.srt?fmt=srt"),
 						},
 						{
 							Name: stringPtr("Another SRT"),
-							URL:  "http://example.com/another.srt?fmt=srt",
+							URL:  stringPtr("http://example.com/another.srt?fmt=srt"),
 						},
 					},
 				},
@@ -307,7 +307,7 @@ func TestSubtitleFetcher_getSubtitleURL(t *testing.T) {
 					"en": {
 						{
 							Name: stringPtr("English"),
-							URL:  "http://example.com/subtitle.srt?FMT=SRT",
+							URL:  stringPtr("http://example.com/subtitle.srt?FMT=SRT"),
 						},
 					},
 				},
@@ -371,6 +371,18 @@ func TestSubtitleFetcher_getSubtitleURL_EdgeCases(t *testing.T) {
 		expectLogging bool
 	}{
 		{
+			name: "nil caption URL",
+			info: &ytdlp.ExtractedInfo{
+				ExtractedFormat: &ytdlp.ExtractedFormat{Language: stringPtr("en")},
+				AutomaticCaptions: map[string][]*ytdlp.ExtractedSubtitle{
+					"en": {{URL: nil}},
+				},
+			},
+			language:      "en",
+			expectedError: "no subtitle URL found",
+			expectLogging: true,
+		},
+		{
 			name: "nil caption name",
 			info: &ytdlp.ExtractedInfo{
 				ExtractedFormat: &ytdlp.ExtractedFormat{
@@ -380,7 +392,7 @@ func TestSubtitleFetcher_getSubtitleURL_EdgeCases(t *testing.T) {
 					"en": {
 						{
 							Name: nil,
-							URL:  "http://example.com/subtitle.srt?fmt=srt",
+							URL:  stringPtr("http://example.com/subtitle.srt?fmt=srt"),
 						},
 					},
 				},
@@ -399,7 +411,7 @@ func TestSubtitleFetcher_getSubtitleURL_EdgeCases(t *testing.T) {
 					"zh-CN": {
 						{
 							Name: stringPtr("Chinese"),
-							URL:  "http://example.com/subtitle.srt?fmt=srt",
+							URL:  stringPtr("http://example.com/subtitle.srt?fmt=srt"),
 						},
 					},
 				},
@@ -418,13 +430,13 @@ func TestSubtitleFetcher_getSubtitleURL_EdgeCases(t *testing.T) {
 					"en": {
 						{
 							Name: stringPtr("English"),
-							URL:  "http://example.com/subtitle.srt?fmt=srt",
+							URL:  stringPtr("http://example.com/subtitle.srt?fmt=srt"),
 						},
 					},
 					"en-US": {
 						{
 							Name: stringPtr("English US"),
-							URL:  "http://example.com/subtitle-us.srt?fmt=srt",
+							URL:  stringPtr("http://example.com/subtitle-us.srt?fmt=srt"),
 						},
 					},
 				},
@@ -487,7 +499,7 @@ Hello world!`), nil)
 				"en": {
 					{
 						Name: stringPtr("English"),
-						URL:  "http://example.com/subtitle.srt?fmt=srt",
+						URL:  stringPtr("http://example.com/subtitle.srt?fmt=srt"),
 					},
 				},
 			},
@@ -551,7 +563,7 @@ Hello world!`), nil)
 				"en": {
 					{
 						Name: stringPtr("English"),
-						URL:  "http://example.com/subtitle.srt?fmt=srt",
+						URL:  stringPtr("http://example.com/subtitle.srt?fmt=srt"),
 					},
 				},
 			},

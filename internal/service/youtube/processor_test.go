@@ -212,7 +212,7 @@ func createMockResult() *ytdlp.Result {
 			"en": {
 				{
 					Name: stringPtr("English"),
-					URL:  "http://example.com/subtitle.srt?fmt=srt",
+					URL:  stringPtr("http://example.com/subtitle.srt?fmt=srt"),
 				},
 			},
 		},

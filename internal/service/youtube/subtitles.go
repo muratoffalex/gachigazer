@@ -114,8 +114,8 @@ func (sf *SubtitleFetcher) getSubtitleURL(info *ytdlp.ExtractedInfo, language st
 	}).Debug("Available captions")
 
 	for _, caption := range languageCaptions {
-		if strings.Contains(strings.ToLower(caption.URL), "fmt=srt") && caption.URL != "" {
-			return caption.URL, nil
+		if caption.URL != nil && strings.Contains(strings.ToLower(*caption.URL), "fmt=srt") {
+			return *caption.URL, nil
 		}
 	}
 
