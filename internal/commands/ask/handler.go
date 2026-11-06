@@ -3085,7 +3085,7 @@ func (c *Command) generate(ctx context.Context, prompt, addition string, chatID 
 	prompt = fmt.Sprintf("[TASK STARTED]%s[TASK ENDED]\n\nTask must satisfy these criteria: %s", prompt, addition)
 
 	// TODO: move to config
-	var temp float32 = 2.0
+	var temp float32 = 1.2
 	// TODO: move prompts (generate, summarize, title generation) in config prompts.
 	// E.g., if exists prompt with name "generate",
 	// then use it, else use default

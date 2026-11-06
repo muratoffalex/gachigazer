@@ -180,8 +180,12 @@ func (r *ProviderRegistry) GetFormattedModel(ctx context.Context, modelName, pro
 			break
 		}
 	}
-	model.Alias = aliasName
-	return model, err
+	if err != nil {
+		return nil, err
+	}
+	resolvedModel := *model
+	resolvedModel.Alias = aliasName
+	return &resolvedModel, nil
 }
 
 func (r *ProviderRegistry) GetAllModels(ctx context.Context, free, fresh bool) (map[string][]*ModelInfo, error) {

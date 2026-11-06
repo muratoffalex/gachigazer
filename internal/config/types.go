@@ -548,11 +548,11 @@ type askDisplayOptions struct {
 }
 
 type askImagesOptions struct {
-	Enabled                    bool          `koanf:"enabled"`
-	Max                        int           `koanf:"max"`
-	Lifetime                   time.Duration `koanf:"lifetime"`
-	PreprocessWithMultimodal bool            `koanf:"preprocess_with_multimodal"`
-	PreprocessPrompt           string        `koanf:"preprocess_prompt"`
+	Enabled                  bool          `koanf:"enabled"`
+	Max                      int           `koanf:"max"`
+	Lifetime                 time.Duration `koanf:"lifetime"`
+	PreprocessWithMultimodal bool          `koanf:"preprocess_with_multimodal"`
+	PreprocessPrompt         string        `koanf:"preprocess_prompt"`
 }
 
 type askAudioOptions struct {
