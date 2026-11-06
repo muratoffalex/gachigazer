@@ -129,6 +129,14 @@ type prompt struct {
 type userInfo struct {
 	Name      string
 	EncodedID string
+	SenderTag string
+}
+
+func formatSenderTag(tag string) string {
+	if tag == "" {
+		return ""
+	}
+	return fmt.Sprintf(" tag=%q", tag)
 }
 
 type forwardOrigin struct {
@@ -499,6 +507,7 @@ func (mc *MessageContent) GetMessageContent() string {
 		if fo := replyMsg.ForwardOrigin; fo != nil {
 			replyHeader += formatForwardOrigin(fo)
 		}
+		replyHeader += formatSenderTag(replyMsg.UserInfo.SenderTag)
 
 		replyHeader += fmt.Sprintf(" @%s]\n%s",
 			now.Format("Jan02 15:04"),
@@ -512,9 +521,10 @@ func (mc *MessageContent) GetMessageContent() string {
 	}
 
 	userInfo := mc.UserInfo
-	userHeader := fmt.Sprintf("[USER: %s(%s) @%s]",
+	userHeader := fmt.Sprintf("[USER: %s(%s)%s @%s]",
 		userInfo.Name,
 		userInfo.EncodedID,
+		formatSenderTag(userInfo.SenderTag),
 		now.Format("Jan02 15:04"),
 	)
 
@@ -554,6 +564,7 @@ func (c *Command) ExtractMessageContent(msg *telegram.MessageOriginal, isCurrent
 	if msg == nil {
 		return content
 	}
+	content.UserInfo.SenderTag = msg.SenderTag
 
 	// Extract and clean text content
 	content.Text, content.Command, content.Args = extractMessageText(msg, isCurrentMessage)
