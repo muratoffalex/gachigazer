@@ -2619,6 +2619,7 @@ func (c *Command) handleRequest(
 		// don't use tools model on last iteration
 		if iteration+1 == maxIterations {
 			currentModel = model
+			requestTools = nil
 
 			conversationHistory, err := c.getConversationHistory(chatID, sentMsgID)
 			if err == nil {
@@ -2629,30 +2630,44 @@ func (c *Command) handleRequest(
 				}
 				currentContent.ConversationHistory = conversationHistory
 				currentContent.Tools = nil
-				requestTools = nil
 				messages = c.buildPromptWithHistory(model, currentContent, c.args, true)
+			}
+			if iteration > 0 {
+				messages = append(messages, ai.Message{
+					Role: ai.RoleUser,
+					Text: "The tool phase is over. Answer the original request now using the available information, and state what you could not verify.",
+				})
 			}
 		} else if len(requestTools) > 0 {
 			if !c.cmdCfg.Tools.AutoRun {
 				currentModel = toolsModel
 			}
 		}
-		if isStream {
-			response.Content, response.Reasoning, tools, usage, annotations, params, err = c.AskStream(
-				ctx, messages, requestTools, currentModel, currentContent.Prompt.Name,
-				chatID, false, *params, sentMsgID,
-			)
-		} else {
-			response.Content, response.Reasoning, tools, _, usage, annotations, params, err = c.Ask(
-				ctx, messages, requestTools, currentModel, currentContent.Prompt.Name,
-				chatID, false, *params,
-			)
-		}
-		if err == nil && strings.TrimSpace(response.Content) == "" && len(tools) == 0 {
-			err = fmt.Errorf("model %s returned an empty reply", currentModel.FullName())
+		requestParams := *params
+		for attempt := range 2 {
+			if isStream {
+				response.Content, response.Reasoning, tools, usage, annotations, params, err = c.AskStream(
+					ctx, messages, requestTools, currentModel, currentContent.Prompt.Name,
+					chatID, false, requestParams, sentMsgID,
+				)
+			} else {
+				response.Content, response.Reasoning, tools, _, usage, annotations, params, err = c.Ask(
+					ctx, messages, requestTools, currentModel, currentContent.Prompt.Name,
+					chatID, false, requestParams,
+				)
+			}
+			emptyReply := err == nil && strings.TrimSpace(response.Content) == "" && len(tools) == 0
+			if emptyReply {
+				err = fmt.Errorf("model %s returned an empty reply", currentModel.FullName())
+			}
+			if attempt > 0 || len(requestTools) > 0 || ctx.Err() != nil ||
+				(!emptyReply && !errors.Is(err, ai.ErrIncompleteStream) && !ai.IsRetryableError(err)) {
+				break
+			}
+			c.Logger.WithError(err).Warn("Retrying final AI request")
 		}
 		if err != nil {
-			if ai.IsRetryableError(err) && c.retryCount < maxRetries {
+			if len(requestTools) > 0 && ai.IsRetryableError(err) && c.retryCount < maxRetries {
 				c.retryCount++
 				time.Sleep(time.Second)
 				c.Logger.Warn("RETRY " + fmt.Sprint(c.retryCount))

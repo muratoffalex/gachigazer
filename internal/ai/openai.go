@@ -5,9 +5,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"maps"
 	"net/http"
 	"strings"
@@ -17,6 +17,8 @@ import (
 	"github.com/muratoffalex/gachigazer/internal/config"
 	"github.com/muratoffalex/gachigazer/internal/logger"
 )
+
+var ErrIncompleteStream = errors.New("AI stream ended before completion")
 
 const modelsCacheDuration = 30 * time.Minute
 
@@ -163,11 +165,12 @@ func (c *OpenAICompatibleClient) AskStream(
 
 		reader := bufio.NewReader(resp.Body)
 		tempToolCalls := make(map[int]*ToolCall, 0)
+		finished := false
 		for {
 			line, err := reader.ReadBytes('\n')
 			if err != nil {
-				if err != io.EOF {
-					log.Printf("stream read error: %v", err)
+				if !finished || err != io.EOF {
+					chunkCh <- Chunk{Error: &AIError{ProviderName: c.Name(), ModelName: request.Model, OriginalErr: fmt.Errorf("%w: %w", ErrIncompleteStream, err)}}
 				}
 				return
 			}
@@ -234,7 +237,14 @@ func (c *OpenAICompatibleClient) AskStream(
 				if reasoning == "" {
 					reasoning = delta.ReasoningContent
 				}
-				switch event.Choices[0].FinishReason {
+				finishReason := event.Choices[0].FinishReason
+				if finishReason != "" {
+					finished = true
+					c.logger.WithFields(logger.Fields{"model": request.Model, "finish_reason": finishReason}).Debug("AI stream finished")
+				}
+				switch finishReason {
+				case "length":
+					chunk.Error = &AIError{ProviderName: c.Name(), ModelName: request.Model, Message: "generation reached the output token limit"}
 				case "tool_calls":
 					values := make([]*ToolCall, 0, len(tempToolCalls))
 					for _, value := range tempToolCalls {
@@ -254,11 +264,12 @@ func (c *OpenAICompatibleClient) AskStream(
 			}
 
 			if event.Usage != nil {
-				chunk = Chunk{
-					Usage: event.Usage,
-				}
+				chunk.Usage = event.Usage
 			}
 			chunkCh <- chunk
+			if chunk.Error != nil {
+				return
+			}
 		}
 	}()
 
