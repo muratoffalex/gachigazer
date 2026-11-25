@@ -1707,7 +1707,9 @@ You MUST follow the Markdown rules. STRICTLY RESPOND IN: {{language}}. NEVER swi
 			if len(msg.Annotations) > 0 {
 				content.Annotations = msg.Annotations
 			}
-			contentList = append(contentList, content)
+			if content.Text != "" {
+				contentList = append(contentList, content)
+			}
 
 			if args.HandleImages && model.SupportsImageRecognition() && (imageLifetime == 0 || now.Before(msg.CreatedAt.Add(imageLifetime))) {
 				if len(msg.Images) > 0 && model.IsMultimodal() && imagesInHistoryCount <= allowedImagesCount {
@@ -1733,7 +1735,9 @@ You MUST follow the Markdown rules. STRICTLY RESPOND IN: {{language}}. NEVER swi
 		} else {
 			message.Text = msg.Text
 		}
-		historyMessages = append(historyMessages, message)
+		if message.Text != "" || len(message.Content) > 0 {
+			historyMessages = append(historyMessages, message)
+		}
 	}
 
 	slices.Reverse(historyMessages)
@@ -2643,6 +2647,9 @@ func (c *Command) handleRequest(
 				ctx, messages, requestTools, currentModel, currentContent.Prompt.Name,
 				chatID, false, *params,
 			)
+		}
+		if err == nil && strings.TrimSpace(response.Content) == "" && len(tools) == 0 {
+			err = fmt.Errorf("model %s returned an empty reply", currentModel.FullName())
 		}
 		if err != nil {
 			if ai.IsRetryableError(err) && c.retryCount < maxRetries {
